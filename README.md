@@ -6,6 +6,23 @@ att.js is a node.js library that eases interaction with A Township Tale's APIs.
 
 Unlike the old alta-jsapi, it makes extensive use of object-oriented design, making finding functions, and calling the API much more intuitive.
 
+## Setup
+Firstly, install the library `npm i https://github.com/alta-vr/att.js`.
+
+You will need to configure client id and secret somewhere that won't be checked into git.
+For instance, create a file called `config.js`, and add `config.js` to the `.gitignore`.
+
+This file should contain:
+```module.exports = {
+    "client_id": "<insert id here>",
+    "client_secret": "<insert secret here>",
+    "scope" : "<insert scopes here>",
+}```
+
+At this stage, scopes should be:
+`ws.group ws.group_members ws.group_servers ws.group_bans ws.group_invites group.join group.leave group.view group.members group.invite server.view server.console`
+
+
 ## Modules
 Currently att.js has the following modules:
 
