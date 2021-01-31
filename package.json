@@ -16,7 +16,6 @@
     "@types/ws": "^7.4.0",
     "att-websockets": "git+https://github.com/alta-vr/att-websockets.git",
     "chalk": "^4.1.0",
-    "discord.js": "^12.5.1",
     "jwt-decode": "^3.1.2",
     "node-fetch": "^2.6.1",
     "simple-oauth2": "^4.2.0",
