@@ -24,7 +24,8 @@ You will need to configure client id and secret somewhere that won't be checked 
 For instance, create a file called `config.js`, and add `config.js` to the `.gitignore`.
 
 This file should contain:
-```module.exports = {
+```
+module.exports = {
     "client_id": "<insert id here>",
     "client_secret": "<insert secret here>",
     "scope" : "<insert scopes here>",
