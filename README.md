@@ -1,7 +1,7 @@
 # Work In Progress
 Please note this library is a work in progress, and is not usable by the public yet. It requires OAuth client keys, which are yet to be available. Please look into att-bot-js or att-websockets if you would like to make a bot in the meantime.
 
-#About
+# About
 att.js is a node.js library that eases interaction with A Township Tale's APIs. 
 
 Unlike the old alta-jsapi, it makes extensive use of object-oriented design, making finding functions, and calling the API much more intuitive.
