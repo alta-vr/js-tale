@@ -7,8 +7,19 @@ att.js is a node.js library that eases interaction with A Township Tale's APIs.
 Unlike the old alta-jsapi, it makes extensive use of object-oriented design, making finding functions, and calling the API much more intuitive.
 
 ## Setup
-Firstly, install the library `npm i https://github.com/alta-vr/att.js`.
 
+### Dependencies
+Firstly, setup a project and install required dependencies.
+
+`npm init`
+`npm i https://github.com/alta-vr/att.js`
+`npm i typescript --save-dev`
+`npm i ts-node --save-dev`
+
+In `package.json`, add a script called `start`:
+`"start": "ts-node ."`
+
+### Config
 You will need to configure client id and secret somewhere that won't be checked into git.
 For instance, create a file called `config.js`, and add `config.js` to the `.gitignore`.
 
@@ -17,11 +28,60 @@ This file should contain:
     "client_id": "<insert id here>",
     "client_secret": "<insert secret here>",
     "scope" : "<insert scopes here>",
-}```
+}
+```
 
 At this stage, scopes should be:
 `ws.group ws.group_members ws.group_servers ws.group_bans ws.group_invites group.join group.leave group.view group.members group.invite server.view server.console`
 
+### index.ts
+Create a file called `index.ts`.
+
+This is the main entry point of your bot.
+Here's an example of a bot which will automatically connect to available servers.
+
+```
+const config = require('./config');
+
+import { ApiConnection } from 'att.js/Core/ApiConnection';
+import { SubscriptionManager } from 'att.js/Core/SubscriptionManager';
+import { GroupManager } from 'att.js/Groups/GroupManager';
+
+import Logger, { initLogger } from 'att.js/logger';
+import { Console } from 'att.js/Groups/Console';
+
+initLogger();
+
+const logger = new Logger('Main');
+
+class Main
+{
+    api:ApiConnection = new ApiConnection();
+    subscriptions:SubscriptionManager = new SubscriptionManager(this.api);
+    groupManager:GroupManager = new GroupManager(this.subscriptions);
+
+    async init()
+    {
+        await this.api.login(config);
+        
+        await this.subscriptions.init();
+
+        await this.groupManager.groups.refresh(true);
+
+        await this.groupManager.acceptAllInvites(true);
+
+        await this.groupManager.automaticConsole(this.handleConnection.bind(this));
+    }
+
+    private handleConnection(connection:Console)
+    {
+        logger.success(`Connected to ${connection.server.data.name}`);
+    }
+}
+
+var main = new Main();
+main.init();
+```
 
 ## Modules
 Currently att.js has the following modules:
