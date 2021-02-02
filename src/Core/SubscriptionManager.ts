@@ -21,10 +21,12 @@ export class SubscriptionManager
         return new Promise<void>((resolve, reject) =>
         {
             this.ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev", { headers: this.api.headers });
+            
             this.ws.on('open', () =>
             {
                 resolve();
             });
+            
             this.ws.on('message', (message: any) =>
             {
                 if (!!message)
@@ -48,6 +50,8 @@ export class SubscriptionManager
                     }
                 }
             });
+
+            this.ws.on('close', (code, reason) => { console.log(`WebAPI Websocket closed. Code: ${code}. Reason: ${reason}.`); });
         });
     }
     subscribe(event: string, sub: any, callback: (data: any) => void)
@@ -56,6 +60,7 @@ export class SubscriptionManager
         {
             throw new Error("Subscription manager must have init called first");
         }
+
         this.nextId++;
         this.emitter.on(`${event}-${sub}`, callback);
         this.ws.send(JSON.stringify({
@@ -64,8 +69,10 @@ export class SubscriptionManager
             path: `subscription/${event}/${sub}`,
             authorization: this.api.headers["Authorization"]
         }));
+
         return new Promise((resolve, reject) => this.emitter.once(`request-${this.nextId}`, data => { data.responseCode == 200 ? resolve(data) : reject(data); }));
     }
+
     private onMessage(data: any)
     {
         if (!!data)

@@ -95,7 +95,12 @@ export class GroupServerList extends LiveList<Server>
         {
             await this.manager.api.fetch('GET', `servers/${server.data.id}`)
             .then(data => server.onStatus(data))
-            .then(logger.thenInfo(`Refreshed server info for ${server.data.name} (${server.data.id})`));
+            .then(logger.thenInfo(`Refreshed server info for ${server.data.name} (${server.data.id})`))
+            .catch(e => 
+            {
+                logger.error("Error getting server info for " + server.data.name);
+                logger.info(e);
+            })
         }
 
         return this.items;

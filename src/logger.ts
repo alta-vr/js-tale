@@ -22,12 +22,11 @@ export function initLogger()
 export default class Logger
 {
     tag:any;
-    minLevel:number;
+
+    static levels:{[name:string]:number} = {};
 
     constructor(type:any|undefined, minLevel:number = 1)
-    {
-        this.minLevel = minLevel;
-        
+    {        
         if (!!type)
         {
             this.tag = `[${type}] `;
@@ -35,6 +34,11 @@ export default class Logger
         else
         {
             this.tag = '';
+        }
+        
+        if (Logger.levels[this.tag] === undefined)
+        {
+            Logger.levels[this.tag] = minLevel;
         }
     }
 
@@ -60,7 +64,7 @@ export default class Logger
 
     trace(value:any)
     {
-        if (this.minLevel <= 0)
+        if (Logger.levels[this.tag] <= 0)
         {
             value = this.formatLog(value);
 
@@ -75,7 +79,7 @@ export default class Logger
 
     log(value:any)
     {
-        if (this.minLevel <= 1)
+        if (Logger.levels[this.tag] <= 1)
         {
             value = this.formatLog(value);
 
@@ -90,7 +94,7 @@ export default class Logger
 
     info(value:any)
     {
-        if (this.minLevel <= 2)
+        if (Logger.levels[this.tag] <= 2)
         {
             value = this.formatLog(value);
 
@@ -105,7 +109,7 @@ export default class Logger
 
     success(value:any)
     {
-        if (this.minLevel <= 3)
+        if (Logger.levels[this.tag] <= 3)
         {
             value = this.formatLog(value);
 
@@ -120,7 +124,7 @@ export default class Logger
 
     warn(value:any)
     {
-        if (this.minLevel <= 3)
+        if (Logger.levels[this.tag] <= 3)
         {
             value = this.formatLog(value);
 
@@ -135,7 +139,7 @@ export default class Logger
 
     error(value:any)
     {
-        if (this.minLevel <= 4)
+        if (Logger.levels[this.tag] <= 4)
         {
             value = this.formatLog(value);
 
