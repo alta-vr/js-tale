@@ -45,12 +45,12 @@ Here's an example of a bot which will automatically connect to available servers
 ```
 const config = require('./config');
 
-import { ApiConnection } from 'att.js/dist/Core/ApiConnection';
-import { SubscriptionManager } from 'att.js/dist/Core/SubscriptionManager';
-import { GroupManager } from 'att.js/dist/Groups/GroupManager';
+import { ApiConnection } from 'att.js/Core/ApiConnection';
+import { SubscriptionManager } from 'att.js/Core/SubscriptionManager';
+import { GroupManager } from 'att.js/Groups/GroupManager';
 
-import Logger, { initLogger } from 'att.js/dist/logger';
-import { Console } from 'att.js/dist/Groups/Console';
+import Logger, { initLogger } from 'att.js/logger';
+import { Console } from 'att.js/Groups/Console';
 
 initLogger();
 
