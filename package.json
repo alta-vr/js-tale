@@ -7,7 +7,7 @@
       "compile" : "tsc"
   },
   "author": "Joel",
-  "license": "ISC",
+  "license": "GPL 3.0",
   "dependencies": {
     "@types/node": "^14.14.19",
     "@types/node-fetch": "^2.5.7",
