@@ -4,7 +4,8 @@
   "description": "",
   "main" : "index.js",
   "scripts": {
-      "compile" : "tsc"
+      "build" : "tsc",
+      "publish": "npm version patch && git add --all && git commit --m 'published' && git push"
   },
   "author": "Joel",
   "license": "GPL 3.0",
