@@ -12,9 +12,13 @@ Unlike the old alta-jsapi, it makes extensive use of object-oriented design, mak
 Firstly, setup a project and install required dependencies.
 
 `npm init`
+
 `npm i js-tale`
+
 `npm i typescript --save-dev`
+
 `npm i ts-node --save-dev`
+
 `tsc --init`
 
 In `package.json`, add a script called `start`:
