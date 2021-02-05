@@ -76,12 +76,19 @@ class Main
 
         await this.groupManager.acceptAllInvites(true);
 
-        await this.groupManager.automaticConsole(this.handleConnection.bind(this));
+        this.groupManager.automaticConsole(this.connectionOpened.bind(this));
     }
 
-    private handleConnection(connection:Console)
+    private connectionOpened(connection:Console)
     {
         logger.success(`Connected to ${connection.server.data.name}`);
+
+        connection.on('closed', this.connectionClosed)
+    }
+
+    private connectionClosed(connection:Console)
+    {
+        logger.warn(`Disconnected from ${connection.server.data.name}`);
     }
 }
 
