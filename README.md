@@ -49,12 +49,12 @@ Here's an example of a bot which will automatically connect to available servers
 ```
 const config = require('./config');
 
-import { ApiConnection } from 'att.js/dist/Core/ApiConnection';
-import { SubscriptionManager } from 'att.js/dist/Core/SubscriptionManager';
-import { GroupManager } from 'att.js/dist/Groups/GroupManager';
+import { ApiConnection } from 'js-tale/dist/Core/ApiConnection';
+import { SubscriptionManager } from 'js-tale/dist/Core/SubscriptionManager';
+import { GroupManager } from 'js-tale/dist/Groups/GroupManager';
 
-import Logger, { initLogger } from 'att.js/dist/logger';
-import { Console } from 'att.js/dist/Groups/Console';
+import Logger, { initLogger } from 'js-tale/dist/logger';
+import { Console } from 'js-tale/dist/Groups/Console';
 
 initLogger();
 
