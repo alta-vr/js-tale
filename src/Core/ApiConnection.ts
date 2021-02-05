@@ -61,7 +61,25 @@ export class ApiConnection
         };
 
         const client = new ClientCredentials(clientConfig);
-        this.accessToken = (await client.getToken(tokenParams)).token.access_token;
+        
+        try
+        {
+            this.accessToken = (await client.getToken(tokenParams)).token.access_token;
+        }
+        catch (e)
+        {
+            try
+            {
+                logger.fatal(e.data.payload.error);
+            }
+            catch
+            {
+                logger.error("Unknown error");
+                logger.info(e);
+            }
+
+            return;
+        }
 
         this.headers = {
             "Content-Type": "application/json",

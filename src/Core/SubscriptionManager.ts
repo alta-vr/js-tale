@@ -51,9 +51,21 @@ export class SubscriptionManager
                 }
             });
 
-            this.ws.on('close', (code, reason) => { console.log(`WebAPI Websocket closed. Code: ${code}. Reason: ${reason}.`); });
+            this.ws.on('close', (code, reason) =>
+            { 
+                if (code == 1001)
+                {
+                    logger.info("Websocket expired, recreating");
+                    this.init();
+                }
+                else
+                {
+                    logger.error(`WebAPI Websocket closed. Code: ${code}. Reason: ${reason}.`); 
+                }
+            });
         });
     }
+
     subscribe(event: string, sub: any, callback: (data: any) => void)
     {
         if (!this.ws)
