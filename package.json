@@ -1,11 +1,11 @@
 {
   "name": "js-tale",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
-  "main" : "index.js",
+  "main": "index.js",
   "scripts": {
-      "build" : "tsc",
-      "publish": "npm version patch && git add --all && git commit --m 'published' && git push"
+    "build": "tsc",
+    "publish": "npm version patch && git add --all && git commit --m 'published' && git push"
   },
   "author": "Joel",
   "license": "GPL 3.0",
