@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.GroupMember = void 0;
 var GroupMember = /** @class */ (function () {
     function GroupMember(group, data) {
         this.group = group;

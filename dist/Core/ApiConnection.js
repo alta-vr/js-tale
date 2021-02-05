@@ -39,6 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ApiConnection = exports.HttpError = void 0;
 var simple_oauth2_1 = require("simple-oauth2");
 var jwt_decode_1 = __importDefault(require("jwt-decode"));
 var node_fetch_1 = __importDefault(require("node-fetch"));
@@ -61,7 +62,7 @@ var ApiConnection = /** @class */ (function () {
     }
     ApiConnection.prototype.login = function (config) {
         return __awaiter(this, void 0, void 0, function () {
-            var clientConfig, tokenParams, client, _a, token;
+            var clientConfig, tokenParams, client, _a, e_1, token;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -80,10 +81,25 @@ var ApiConnection = /** @class */ (function () {
                             scope: config.scope
                         };
                         client = new simple_oauth2_1.ClientCredentials(clientConfig);
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 3, , 4]);
                         _a = this;
                         return [4 /*yield*/, client.getToken(tokenParams)];
-                    case 1:
+                    case 2:
                         _a.accessToken = (_b.sent()).token.access_token;
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _b.sent();
+                        try {
+                            logger.fatal(e_1.data.payload.error);
+                        }
+                        catch (_c) {
+                            logger.error("Unknown error");
+                            logger.info(e_1);
+                        }
+                        return [2 /*return*/];
+                    case 4:
                         this.headers = {
                             "Content-Type": "application/json",
                             "x-api-key": "2l6aQGoNes8EHb94qMhqQ5m2iaiOM9666oDTPORf",

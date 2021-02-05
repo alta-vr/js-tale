@@ -39,6 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SubscriptionManager = void 0;
 var ws_1 = __importDefault(require("ws"));
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
 var logger_1 = __importDefault(require("../logger"));
@@ -76,7 +77,15 @@ var SubscriptionManager = /** @class */ (function () {
                                 }
                             }
                         });
-                        _this.ws.on('close', function (code, reason) { console.log("WebAPI Websocket closed. Code: " + code + ". Reason: " + reason + "."); });
+                        _this.ws.on('close', function (code, reason) {
+                            if (code == 1001) {
+                                logger.info("Websocket expired, recreating");
+                                _this.init();
+                            }
+                            else {
+                                logger.error("WebAPI Websocket closed. Code: " + code + ". Reason: " + reason + ".");
+                            }
+                        });
                     })];
             });
         });
