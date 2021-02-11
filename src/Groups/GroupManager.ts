@@ -6,7 +6,7 @@ import { SubscriptionManager } from "../Core/SubscriptionManager";
 import { Group } from "./Group";
 import { LiveList } from "../Core/LiveList";
 import Logger from '../logger';
-import { Console } from './Console';
+import { ServerConnection } from './ServerConnection';
 
 
 interface GroupManagerEvents
@@ -73,20 +73,20 @@ export class GroupManager extends EventEmitter<GroupManagerEvents>
         }
     }
 
-    automaticConsole(callback:(connection:Console)=>void)
+    async automaticConsole(callback:(connection:ServerConnection)=>void)
     {
         logger.info("Enabling automatic console for all groups");
 
-        let handleGroup = (group:Group) =>
+        let handleGroup = async (group:Group) =>
         {
-            group.automaticConsole(callback);
+            await group.automaticConsole(callback);
         }
 
         this.on('create', handleGroup);
 
         for (var group of this.groups.items)
         {
-            handleGroup(group);
+            await handleGroup(group);
         }
     }
 }

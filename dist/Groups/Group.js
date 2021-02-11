@@ -83,7 +83,7 @@ exports.GroupMemberList = GroupMemberList;
 var GroupServerList = /** @class */ (function (_super) {
     __extends(GroupServerList, _super);
     function GroupServerList(group) {
-        var _this = _super.call(this, group.info.name + " servers", function () { return new Promise(function (resolve) { return resolve(group.info.servers); }); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (data) { return data.id; }, function (server) { return server.data.id; }, function (data) { return new Server_1.Server(group, data); }) || this;
+        var _this = _super.call(this, group.info.name + " servers", function () { return new Promise(function (resolve) { return resolve(group.info.servers); }); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (data) { return data.id; }, function (server) { return server.info.id; }, function (data) { return new Server_1.Server(group, data); }) || this;
         _this.isStatusLive = false;
         _this.group = group;
         _this.manager = group.manager;
@@ -112,11 +112,11 @@ var GroupServerList = /** @class */ (function (_super) {
                     case 1:
                         if (!(_i < _a.length)) return [3 /*break*/, 4];
                         server = _a[_i];
-                        return [4 /*yield*/, this.manager.api.fetch('GET', "servers/" + server.data.id)
+                        return [4 /*yield*/, this.manager.api.fetch('GET', "servers/" + server.info.id)
                                 .then(function (data) { return server.onStatus(data); })
-                                .then(logger.thenInfo("Refreshed server info for " + server.data.name + " (" + server.data.id + ")"))
+                                .then(logger.thenInfo("Refreshed server info for " + server.info.name + " (" + server.info.id + ")"))
                                 .catch(function (e) {
-                                logger.error("Error getting server info for " + server.data.name);
+                                logger.error("Error getting server info for " + server.info.name);
                                 logger.info(e);
                             })];
                     case 2:
@@ -134,6 +134,10 @@ var GroupServerList = /** @class */ (function (_super) {
         var server = this.get(data.content.id);
         if (!!server) {
             server.onStatus(data.content);
+        }
+        else {
+            logger.error("Unknown server in " + this.group.info.name);
+            console.log(data);
         }
     };
     return GroupServerList;
@@ -160,7 +164,7 @@ var Group = /** @class */ (function (_super) {
         _this.servers = new GroupServerList(_this);
         _this.servers.on('create', function (data) { return _this.emit('server-create', data); });
         _this.servers.on('delete', function (data) { return _this.emit('server-delete', data); });
-        _this.servers.on('update', function (item, old) { return item.onUpdate(old.data); });
+        _this.servers.on('update', function (item, old) { return item.onUpdate(old.info); });
         return _this;
     }
     Group.prototype.createList = function (route, name, hasUpdate, create) {
@@ -210,29 +214,27 @@ var Group = /** @class */ (function (_super) {
                         _b.sent();
                         connections = [];
                         handleStatus = function (server) { return __awaiter(_this, void 0, void 0, function () {
-                            var result, _a;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
+                            var result, e_1;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
                                     case 0:
-                                        console.info("Received status from " + server.data.name + " - " + server.isOnline + " - " + server.data.online_ping + " - " + server.data.online_players.length);
                                         if (!server.isOnline) return [3 /*break*/, 4];
-                                        _b.label = 1;
+                                        _a.label = 1;
                                     case 1:
-                                        _b.trys.push([1, 3, , 4]);
+                                        _a.trys.push([1, 3, , 4]);
                                         return [4 /*yield*/, server.getConsole()];
                                     case 2:
-                                        result = _b.sent();
+                                        result = _a.sent();
                                         if (!connections.includes(result)) {
                                             connections.push(result);
-                                            result.on('closed', function (connection, data) { return connections.splice(connections.indexOf(connection), 1); });
+                                            result.on('closed', function (connection, info) { return connections.splice(connections.indexOf(connection), 1); });
                                             callback(result);
-                                        }
-                                        else {
-                                            console.info("Console for " + server.data.name + " already exists.");
                                         }
                                         return [3 /*break*/, 4];
                                     case 3:
-                                        _a = _b.sent();
+                                        e_1 = _a.sent();
+                                        console.log("catch");
+                                        console.error(e_1);
                                         return [3 /*break*/, 4];
                                     case 4: return [2 /*return*/];
                                 }
@@ -240,9 +242,11 @@ var Group = /** @class */ (function (_super) {
                         }); };
                         this.servers.on('create', function (server) {
                             server.on('status', handleStatus);
+                            handleStatus(server);
                         });
                         for (_i = 0, _a = this.servers.items; _i < _a.length; _i++) {
                             server = _a[_i];
+                            server.on('status', handleStatus);
                             handleStatus(server);
                         }
                         return [2 /*return*/];

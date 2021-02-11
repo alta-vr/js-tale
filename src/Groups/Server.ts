@@ -4,15 +4,15 @@ import { Group } from './Group';
 import Logger from '../logger';
 
 import { Connection, Message, MessageType } from 'att-websockets';
-import { Console } from './Console';
+import { ServerConnection } from './ServerConnection';
 
 interface ServerEvents
 {
-    'update' : (server:Server, old:ServerData)=>void;
-    'status' : (server:Server, old:ServerData)=>void;
+    'update' : (server:Server, old:ServerInfo)=>void;
+    'status' : (server:Server, old:ServerInfo)=>void;
 }
 
-export interface ServerData
+export interface ServerInfo
 {
     id: number;
     name: string;
@@ -33,42 +33,44 @@ const logger = new Logger('Server');
 export class Server extends EventEmitter<ServerEvents>
 {
     group:Group;
-    data:ServerData;
+    info:ServerInfo;
 
     isOnline:boolean = false;
 
-    console:Console|undefined = undefined;
+    console:ServerConnection|undefined = undefined;
 
-    constructor(group:Group, data:ServerData)
+    constructor(group:Group, info:ServerInfo)
     {
         super();
 
         this.group = group;
-        this.data = data;
+        this.info = info;
         
         this.evaluateState();
     }
     
     private evaluateState()
-    {
-        this.isOnline = !!this.data.online_ping && Date.now() - Date.parse(this.data.online_ping) < 10 * 60 * 1000;
+    {        
+        this.isOnline = !!this.info.online_ping && Date.now() - Date.parse(this.info.online_ping) < 10 * 60 * 1000;
     }
 
     //Provided by LiveList update
-    onUpdate(oldData:ServerData)
+    onUpdate(oldInfo:ServerInfo)
     {
         this.evaluateState();
 
-        this.emit('update', this, oldData);
+        this.emit('update', this, oldInfo);
     }
 
-    onStatus(data:ServerData)
-    {
-        var cache = { ...this.data };
+    onStatus(info:ServerInfo)
+    {        
+        var cache = { ...this.info };
 
-        Object.assign(this.data, data);
+        Object.assign(this.info, info);
 
         this.evaluateState();
+        
+        logger.info(`${this.info.name} received status. Online: ${this.isOnline}. Players: ${!this.info.online_players ? 0 : this.info.online_players.length}`)
 
         this.emit('status', this, cache );
     }
@@ -77,7 +79,7 @@ export class Server extends EventEmitter<ServerEvents>
     {
         if (this.console === undefined)
         {
-            this.console = new Console(this);
+            this.console = new ServerConnection(this);
 
             this.console.on('closed', this.consoleDisconnect.bind(this));
         }
@@ -89,7 +91,7 @@ export class Server extends EventEmitter<ServerEvents>
 
     private consoleDisconnect()
     {
-        logger.error(`Console to ${this.data.name} disconnected.`);
+        logger.error(`Console to ${this.info.name} disconnected.`);
 
         this.console = undefined;
     }

@@ -6,8 +6,8 @@ import { GroupMember } from './GroupMember';
 import { GroupMemberRequest } from './GroupMemberRequest';
 import { GroupMemberInvite } from './GroupMemberInvite';
 import { GroupMemberBan } from './GroupMemberBan';
-import { Server, ServerData } from './Server';
-import { Console } from "./Console";
+import { Server, ServerInfo } from './Server';
+import { ServerConnection } from "./ServerConnection";
 import Logger from '../logger';
 
 
@@ -66,7 +66,7 @@ export class GroupServerList extends LiveList<Server>
         callback => group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback),
         callback => group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback),
         data => data.id,
-        server => server.data.id,
+        server => server.info.id,
         data => new Server(group, data));
 
         this.group = group;
@@ -93,12 +93,12 @@ export class GroupServerList extends LiveList<Server>
 
         for (var server of this.items)
         {
-            await this.manager.api.fetch('GET', `servers/${server.data.id}`)
+            await this.manager.api.fetch('GET', `servers/${server.info.id}`)
             .then(data => server.onStatus(data))
-            .then(logger.thenInfo(`Refreshed server info for ${server.data.name} (${server.data.id})`))
+            .then(logger.thenInfo(`Refreshed server info for ${server.info.name} (${server.info.id})`))
             .catch(e => 
             {
-                logger.error("Error getting server info for " + server.data.name);
+                logger.error("Error getting server info for " + server.info.name);
                 logger.info(e);
             })
         }
@@ -113,6 +113,11 @@ export class GroupServerList extends LiveList<Server>
         if (!!server)
         {
             server.onStatus(data.content);
+        }
+        else
+        {
+            logger.error(`Unknown server in ${this.group.info.name}`);
+            console.log(data);
         }
     }
 }
@@ -155,7 +160,7 @@ export class Group extends EventEmitter<GroupEvents>
 
         this.servers.on('create', data => this.emit('server-create', data));
         this.servers.on('delete', data => this.emit('server-delete', data));
-        this.servers.on('update', (item, old) => item.onUpdate(old.data));
+        this.servers.on('update', (item, old) => item.onUpdate(old.info));
     }
 
     createList<T extends GroupMember>(route: string, name: string, hasUpdate:boolean, create: (data: any) => T): GroupMemberList<T>
@@ -204,7 +209,7 @@ export class Group extends EventEmitter<GroupEvents>
         this.emit('update', this);
     }
 
-    async automaticConsole(callback:(console:Console)=>void)
+    async automaticConsole(callback:(console:ServerConnection)=>void)
     {   
         if (this.isConsoleAutomatic)
         {
@@ -219,12 +224,10 @@ export class Group extends EventEmitter<GroupEvents>
         await this.servers.refresh(true);
         await this.servers.refreshStatus(true);
 
-        let connections:Console[] = [];
+        let connections:ServerConnection[] = [];
 
         let handleStatus = async (server:Server) =>
         {
-            console.info(`Received status from ${server.data.name} - ${server.isOnline} - ${server.data.online_ping} - ${server.data.online_players.length}`);
-
             if (server.isOnline)
             {
                 try
@@ -235,17 +238,15 @@ export class Group extends EventEmitter<GroupEvents>
                     {
                         connections.push(result);
 
-                        result.on('closed', (connection, data) => connections.splice(connections.indexOf(connection), 1));
+                        result.on('closed', (connection, info) => connections.splice(connections.indexOf(connection), 1));
 
                         callback(result);
                     }
-                    else
-                    {
-                        console.info(`Console for ${server.data.name} already exists.`);
-                    }
                 }
-                catch
+                catch (e)
                 {
+                    console.log("catch");
+                    console.error(e);
                     //Permission denied (if not, see console)
                 }
             }
@@ -254,10 +255,14 @@ export class Group extends EventEmitter<GroupEvents>
         this.servers.on('create', server =>
         {
             server.on('status', handleStatus);
+            
+            handleStatus(server);
         })
 
         for (var server of this.servers.items)
         {
+            server.on('status', handleStatus);
+
             handleStatus(server);
         }
     }

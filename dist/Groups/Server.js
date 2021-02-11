@@ -66,31 +66,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Server = void 0;
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
 var logger_1 = __importDefault(require("../logger"));
-var Console_1 = require("./Console");
+var ServerConnection_1 = require("./ServerConnection");
 var logger = new logger_1.default('Server');
 var Server = /** @class */ (function (_super) {
     __extends(Server, _super);
-    function Server(group, data) {
+    function Server(group, info) {
         var _this = _super.call(this) || this;
         _this.isOnline = false;
         _this.console = undefined;
         _this.group = group;
-        _this.data = data;
+        _this.info = info;
         _this.evaluateState();
         return _this;
     }
     Server.prototype.evaluateState = function () {
-        this.isOnline = !!this.data.online_ping && Date.now() - Date.parse(this.data.online_ping) < 10 * 60 * 1000;
+        this.isOnline = !!this.info.online_ping && Date.now() - Date.parse(this.info.online_ping) < 10 * 60 * 1000;
     };
     //Provided by LiveList update
-    Server.prototype.onUpdate = function (oldData) {
+    Server.prototype.onUpdate = function (oldInfo) {
         this.evaluateState();
-        this.emit('update', this, oldData);
+        this.emit('update', this, oldInfo);
     };
-    Server.prototype.onStatus = function (data) {
-        var cache = __assign({}, this.data);
-        Object.assign(this.data, data);
+    Server.prototype.onStatus = function (info) {
+        var cache = __assign({}, this.info);
+        Object.assign(this.info, info);
         this.evaluateState();
+        logger.info(this.info.name + " received status. Online: " + this.isOnline + ". Players: " + (!this.info.online_players ? 0 : this.info.online_players.length));
         this.emit('status', this, cache);
     };
     Server.prototype.getConsole = function () {
@@ -99,7 +100,7 @@ var Server = /** @class */ (function (_super) {
                 switch (_a.label) {
                     case 0:
                         if (this.console === undefined) {
-                            this.console = new Console_1.Console(this);
+                            this.console = new ServerConnection_1.ServerConnection(this);
                             this.console.on('closed', this.consoleDisconnect.bind(this));
                         }
                         return [4 /*yield*/, this.console.waitReady()];
@@ -111,7 +112,7 @@ var Server = /** @class */ (function (_super) {
         });
     };
     Server.prototype.consoleDisconnect = function () {
-        logger.error("Console to " + this.data.name + " disconnected.");
+        logger.error("Console to " + this.info.name + " disconnected.");
         this.console = undefined;
     };
     return Server;

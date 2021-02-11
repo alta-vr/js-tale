@@ -9,7 +9,9 @@ export declare class LiveList<T> extends EventEmitter<LiveListEvents<T>> {
     items: T[];
     isLive: boolean;
     isBlocked: boolean;
-    private map;
+    protected map: {
+        [index: number]: T;
+    };
     private getAll;
     private subscribeToCreate;
     private subscribeToDelete;

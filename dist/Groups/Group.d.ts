@@ -7,7 +7,7 @@ import { GroupMemberRequest } from './GroupMemberRequest';
 import { GroupMemberInvite } from './GroupMemberInvite';
 import { GroupMemberBan } from './GroupMemberBan';
 import { Server } from './Server';
-import { Console } from "./Console";
+import { ServerConnection } from "./ServerConnection";
 interface GroupEvents {
     'member-create': (invite: GroupMember) => void;
     'member-delete': (invite: GroupMember) => void;
@@ -49,6 +49,6 @@ export declare class Group extends EventEmitter<GroupEvents> {
     leave(): Promise<any>;
     invite(userId: number): Promise<any>;
     private receiveNewInfo;
-    automaticConsole(callback: (console: Console) => void): Promise<void>;
+    automaticConsole(callback: (console: ServerConnection) => void): Promise<void>;
 }
 export {};

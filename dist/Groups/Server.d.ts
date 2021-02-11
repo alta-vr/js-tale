@@ -1,12 +1,12 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
 import { UserInfo } from '../Core/ApiConnection';
 import { Group } from './Group';
-import { Console } from './Console';
+import { ServerConnection } from './ServerConnection';
 interface ServerEvents {
-    'update': (server: Server, old: ServerData) => void;
-    'status': (server: Server, old: ServerData) => void;
+    'update': (server: Server, old: ServerInfo) => void;
+    'status': (server: Server, old: ServerInfo) => void;
 }
-export interface ServerData {
+export interface ServerInfo {
     id: number;
     name: string;
     online_players: UserInfo[];
@@ -22,14 +22,14 @@ export interface ServerData {
 }
 export declare class Server extends EventEmitter<ServerEvents> {
     group: Group;
-    data: ServerData;
+    info: ServerInfo;
     isOnline: boolean;
-    console: Console | undefined;
-    constructor(group: Group, data: ServerData);
+    console: ServerConnection | undefined;
+    constructor(group: Group, info: ServerInfo);
     private evaluateState;
-    onUpdate(oldData: ServerData): void;
-    onStatus(data: ServerData): void;
-    getConsole(): Promise<Console>;
+    onUpdate(oldInfo: ServerInfo): void;
+    onStatus(info: ServerInfo): void;
+    getConsole(): Promise<ServerConnection>;
     private consoleDisconnect;
 }
 export {};

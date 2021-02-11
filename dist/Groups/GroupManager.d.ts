@@ -5,7 +5,7 @@ import { GroupInvite } from './GroupInvite';
 import { SubscriptionManager } from "../Core/SubscriptionManager";
 import { Group } from "./Group";
 import { LiveList } from "../Core/LiveList";
-import { Console } from './Console';
+import { ServerConnection } from './ServerConnection';
 interface GroupManagerEvents {
     'create': (group: Group) => void;
     'delete': (group: Group) => void;
@@ -18,6 +18,6 @@ export declare class GroupManager extends EventEmitter<GroupManagerEvents> {
     requests: LiveList<GroupRequest>;
     constructor(subscriptions: SubscriptionManager);
     acceptAllInvites(subscribe: boolean): Promise<void>;
-    automaticConsole(callback: (connection: Console) => void): void;
+    automaticConsole(callback: (connection: ServerConnection) => void): Promise<void>;
 }
 export {};

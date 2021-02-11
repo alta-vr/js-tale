@@ -103,15 +103,40 @@ var GroupManager = /** @class */ (function (_super) {
         });
     };
     GroupManager.prototype.automaticConsole = function (callback) {
-        logger.info("Enabling automatic console for all groups");
-        var handleGroup = function (group) {
-            group.automaticConsole(callback);
-        };
-        this.on('create', handleGroup);
-        for (var _i = 0, _a = this.groups.items; _i < _a.length; _i++) {
-            var group = _a[_i];
-            handleGroup(group);
-        }
+        return __awaiter(this, void 0, void 0, function () {
+            var handleGroup, _i, _a, group;
+            var _this = this;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        logger.info("Enabling automatic console for all groups");
+                        handleGroup = function (group) { return __awaiter(_this, void 0, void 0, function () {
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, group.automaticConsole(callback)];
+                                    case 1:
+                                        _a.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        }); };
+                        this.on('create', handleGroup);
+                        _i = 0, _a = this.groups.items;
+                        _b.label = 1;
+                    case 1:
+                        if (!(_i < _a.length)) return [3 /*break*/, 4];
+                        group = _a[_i];
+                        return [4 /*yield*/, handleGroup(group)];
+                    case 2:
+                        _b.sent();
+                        _b.label = 3;
+                    case 3:
+                        _i++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
     };
     return GroupManager;
 }(tiny_typed_emitter_1.TypedEmitter));

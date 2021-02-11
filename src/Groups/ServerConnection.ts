@@ -8,14 +8,14 @@ import { HttpError } from '../Core/ApiConnection';
 
 interface ConsoleEvents
 {
-    'closed' : (console:Console, data:any)=>void;
-    'system' : (console:Console, data:Message)=>void;
-    'error' : (console:Console, data:any)=>void;
+    'closed' : (console:ServerConnection, data:any)=>void;
+    'system' : (console:ServerConnection, data:Message)=>void;
+    'error' : (console:ServerConnection, data:any)=>void;
 }
 
-const logger = new Logger('Console');
+const logger = new Logger('ServerConnection');
 
-export class Console extends TypedEmitter<ConsoleEvents>
+export class ServerConnection extends TypedEmitter<ConsoleEvents>
 {
     server:Server;
     
@@ -31,8 +31,10 @@ export class Console extends TypedEmitter<ConsoleEvents>
     {
         super();
 
+        console.log("Creating server connection");
+
         this.server = server;
-        this.connection = new Connection(this.server.data.name);
+        this.connection = new Connection(this.server.info.name);
         
         this.connection.onMessage = this.handleMessage.bind(this);
         this.connection.onError = this.handleError.bind(this);
@@ -53,23 +55,30 @@ export class Console extends TypedEmitter<ConsoleEvents>
     {
         if (this.initializing === undefined)
         {
+            console.log("Doing initialize");
+
             this.initializing = new Promise(async (resolve, reject) =>
             {
-                this.server.group.manager.api.fetch('POST', `servers/${this.server.data.id}/console`, {})
+                this.server.group.manager.api.fetch('POST', `servers/${this.server.info.id}/console`, {})
                 .then(async details =>  
                 {      
+                    console.log("Received details");
+                    console.log(details);
+
                     if (details.allowed)
                     {
-                        logger.success(`Connecting to ${this.server.data.name}`);
+                        logger.success(`Connecting to ${this.server.info.name}`);
                     
                         await this.connection.connect(details.connection.address, details.connection.websocket_port, details.token);
             
                         this.isAllowed = true;
+                        this.initializing = undefined;
                         resolve();
                     }
                     else
                     {
                         this.isAllowed = false;
+                        this.initializing = undefined;
                         reject();
                     }
                 })
@@ -83,6 +92,7 @@ export class Console extends TypedEmitter<ConsoleEvents>
                         logger.info(e);
                     }
                     
+                    this.initializing = undefined;
                     reject();
                 });
             });

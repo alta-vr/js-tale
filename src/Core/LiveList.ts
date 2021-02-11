@@ -19,7 +19,7 @@ export class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     isLive: boolean = false;
     isBlocked: boolean = false;
 
-    private map:{[index:number]:T} = {};
+    protected map:{[index:number]:T} = {};
 
     private getAll: () => Promise<any[]>;
     private subscribeToCreate: (callback: (data: any) => void) => Promise<any>;
