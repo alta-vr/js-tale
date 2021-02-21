@@ -95,7 +95,7 @@ var LiveList = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.getSingle(id)];
                     case 1:
                         item = _a.sent();
-                        this.receiveCreate(item);
+                        this.receiveCreate({ content: item });
                         _a.label = 2;
                     case 2: return [2 /*return*/, this.map[id]];
                 }

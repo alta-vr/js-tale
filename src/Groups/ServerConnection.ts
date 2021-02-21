@@ -2,7 +2,7 @@ import { Connection, BasicWrapper, Message, MessageType } from 'att-websockets';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import Logger from '../logger';
 import { EventEmitter } from 'events';
-import { Server } from './Server';
+import Server from './Server';
 import { HttpError } from '../Core/ApiConnection';
 
 
@@ -15,7 +15,7 @@ interface ConsoleEvents
 
 const logger = new Logger('ServerConnection');
 
-export class ServerConnection extends TypedEmitter<ConsoleEvents>
+export default class ServerConnection extends TypedEmitter<ConsoleEvents>
 {
     server:Server;
     

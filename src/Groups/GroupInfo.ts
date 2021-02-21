@@ -1,4 +1,4 @@
-import { Server } from "./Server";
+import Server from "./Server";
 
 interface GroupRole
 {
@@ -8,7 +8,7 @@ interface GroupRole
     permissions: string[];
 }
 
-export interface GroupInfo
+export default interface GroupInfo
 {
     id: number;
     name: string;

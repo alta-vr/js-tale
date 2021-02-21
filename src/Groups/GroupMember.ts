@@ -1,6 +1,6 @@
-import { Group } from "./Group";
+import Group from "./Group";
 
-export class GroupMember
+export default class GroupMember
 {
     group: Group;
     userId: number;

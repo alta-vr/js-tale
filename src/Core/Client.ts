@@ -1,9 +1,9 @@
 import Logger from '../logger';
 import { ApiConnection, SubscriptionManager, GroupManager, Config } from "..";
 
-const logger = new Logger('AttCore');
+const logger = new Logger('Client');
 
-export default class AttCore
+export default class Client
 {
     api:ApiConnection = new ApiConnection();
     subscriptions:SubscriptionManager = new SubscriptionManager(this.api);

@@ -1,10 +1,9 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
 import { UserInfo } from '../Core/ApiConnection';
-import { Group } from './Group';
+import Group from './Group';
 import Logger from '../logger';
 
-import { Connection, Message, MessageType } from 'att-websockets';
-import { ServerConnection } from './ServerConnection';
+import ServerConnection from './ServerConnection';
 
 interface ServerEvents
 {
@@ -30,7 +29,7 @@ export interface ServerInfo
 
 const logger = new Logger('Server');
 
-export class Server extends EventEmitter<ServerEvents>
+export default class Server extends EventEmitter<ServerEvents>
 {
     group:Group;
     info:ServerInfo;

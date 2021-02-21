@@ -1,10 +1,10 @@
-import { GroupInfo } from './GroupInfo';
-import { GroupManager } from "./GroupManager";
+import GroupInfo from './GroupInfo';
+import GroupManager from "./GroupManager";
 import Logger from '../logger';
 
 const logger = new Logger('GroupInvite');
 
-export class GroupInvite
+export default class GroupInvite
 {
     manager: GroupManager;
     info: GroupInfo;

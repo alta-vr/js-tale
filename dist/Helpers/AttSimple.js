@@ -64,7 +64,7 @@ var AttSimple = /** @class */ (function (_super) {
         _this.onConnect = onConnect;
         if (autoInit) {
             _this.init()
-                .catch(function (e) { return logger.error("Error initializing AttBasic"); });
+                .catch(function (e) { logger.error("Error initializing AttBasic"); logger.error(e); });
         }
         return _this;
     }

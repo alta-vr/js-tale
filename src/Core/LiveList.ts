@@ -12,7 +12,7 @@ interface LiveListEvents<T>
     'update': (item : T, old : T) => void;
 }
 
-export class LiveList<T> extends EventEmitter<LiveListEvents<T>> 
+export default class LiveList<T> extends EventEmitter<LiveListEvents<T>> 
 {
     name: string;
     items: T[] = [];
@@ -49,7 +49,7 @@ export class LiveList<T> extends EventEmitter<LiveListEvents<T>>
         {
             var item = await this.getSingle(id);
 
-            this.receiveCreate(item);
+            this.receiveCreate({content:item});
         }
 
        return this.map[id]; 

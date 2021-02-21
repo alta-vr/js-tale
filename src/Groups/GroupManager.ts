@@ -1,12 +1,12 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
-import { ApiConnection } from '../Core/ApiConnection';
-import { GroupRequest } from './GroupRequest';
-import { GroupInvite } from './GroupInvite';
-import { SubscriptionManager } from "../Core/SubscriptionManager";
-import { Group } from "./Group";
-import { LiveList } from "../Core/LiveList";
+import ApiConnection from '../Core/ApiConnection';
+import GroupRequest from './GroupRequest';
+import GroupInvite from './GroupInvite';
+import SubscriptionManager from "../Core/SubscriptionManager";
+import Group from "./Group";
+import LiveList from "../Core/LiveList";
 import Logger from '../logger';
-import { ServerConnection } from './ServerConnection';
+import ServerConnection from './ServerConnection';
 
 
 interface GroupManagerEvents
@@ -17,7 +17,7 @@ interface GroupManagerEvents
 
 const logger = new Logger('GroupManager');
 
-export class GroupManager extends EventEmitter<GroupManagerEvents> 
+export default class GroupManager extends EventEmitter<GroupManagerEvents> 
 {
     api: ApiConnection;
     subscriptions: SubscriptionManager;

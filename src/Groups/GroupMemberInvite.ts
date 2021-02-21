@@ -1,10 +1,10 @@
-import { GroupMember } from './GroupMember';
-import { Group } from "./Group";
+import GroupMember from './GroupMember';
+import Group from "./Group";
 import Logger from '../logger';
 
 const logger = new Logger('GroupMemberInvite');
 
-export class GroupMemberInvite extends GroupMember
+export default class GroupMemberInvite extends GroupMember
 {
     constructor(group: Group, info: any)
     {

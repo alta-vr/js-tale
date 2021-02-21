@@ -4,7 +4,7 @@ import fetchInternal from 'node-fetch';
 import https from 'https';
 import http from 'http';
 
-import { Config } from './Config';
+import Config from './Config';
 import Logger from '../logger';
 
 export type HttpMethod = 'POST' | 'DELETE' | 'GET' | 'PUT' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
@@ -33,7 +33,7 @@ export interface UserInfo
 
 const logger = new Logger('ApiConnection');
 
-export class ApiConnection
+export default class ApiConnection
 {
     httpsAgent: http.Agent | undefined;
     headers: any;

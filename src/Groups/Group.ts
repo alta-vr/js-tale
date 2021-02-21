@@ -1,13 +1,13 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
-import { GroupInfo } from './GroupInfo';
-import { GroupManager } from './GroupManager';
-import { LiveList } from '../Core/LiveList';
-import { GroupMember } from './GroupMember';
-import { GroupMemberRequest } from './GroupMemberRequest';
-import { GroupMemberInvite } from './GroupMemberInvite';
-import { GroupMemberBan } from './GroupMemberBan';
-import { Server, ServerInfo } from './Server';
-import { ServerConnection } from "./ServerConnection";
+import GroupInfo from './GroupInfo';
+import GroupManager from './GroupManager';
+import LiveList from '../Core/LiveList';
+import GroupMember from './GroupMember';
+import GroupMemberRequest from './GroupMemberRequest';
+import GroupMemberInvite from './GroupMemberInvite';
+import GroupMemberBan from './GroupMemberBan';
+import Server, { ServerInfo } from './Server';
+import ServerConnection from "./ServerConnection";
 import Logger from '../logger';
 
 
@@ -137,7 +137,7 @@ export class GroupServerList extends LiveList<Server>
 
 const logger = new Logger('Group');
 
-export class Group extends EventEmitter<GroupEvents>
+export default class Group extends EventEmitter<GroupEvents>
 {
     manager: GroupManager;
     info: GroupInfo;
@@ -170,6 +170,7 @@ export class Group extends EventEmitter<GroupEvents>
         this.bans = this.createList('bans', 'ban', false, false, data => new GroupMemberBan(this, data));
         
         this.servers = new GroupServerList(this);
+        this.servers.refresh(true);
 
         this.servers.on('create', data => this.emit('server-create', data));
         this.servers.on('delete', data => this.emit('server-delete', data));

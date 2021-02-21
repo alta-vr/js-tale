@@ -1,11 +1,11 @@
 import Websocket from 'ws';
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
-import { ApiConnection } from './ApiConnection';
+import { ApiConnection } from '..';
 import Logger from '../logger';
 
 const logger = new Logger('SubscriptionManager');
 
-export class SubscriptionManager
+export default class SubscriptionManager
 {
     emitter: EventEmitter;
     api: ApiConnection;

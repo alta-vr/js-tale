@@ -190,6 +190,7 @@ var Group = /** @class */ (function (_super) {
         _this.requests = _this.createList('requests', 'request', false, false, function (data) { return new GroupMemberRequest_1.GroupMemberRequest(_this, data); });
         _this.bans = _this.createList('bans', 'ban', false, false, function (data) { return new GroupMemberBan_1.GroupMemberBan(_this, data); });
         _this.servers = new GroupServerList(_this);
+        _this.servers.refresh(true);
         _this.servers.on('create', function (data) { return _this.emit('server-create', data); });
         _this.servers.on('delete', function (data) { return _this.emit('server-delete', data); });
         _this.servers.on('update', function (item, old) { return item.onUpdate(old.info); });
