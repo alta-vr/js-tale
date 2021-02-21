@@ -1,7 +1,7 @@
 import Websocket from 'ws';
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
-import { ApiConnection } from './ApiConnection';
-export declare class SubscriptionManager {
+import { ApiConnection } from '..';
+export default class SubscriptionManager {
     emitter: EventEmitter;
     api: ApiConnection;
     ws: Websocket | undefined;

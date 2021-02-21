@@ -1,28 +1,4 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -63,57 +39,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var tiny_typed_emitter_1 = require("tiny-typed-emitter");
 var logger_1 = __importDefault(require("../logger"));
-var ServerConnection_1 = __importDefault(require("./ServerConnection"));
-var logger = new logger_1.default('Server');
-var Server = /** @class */ (function (_super) {
-    __extends(Server, _super);
-    function Server(group, info) {
-        var _this = _super.call(this) || this;
-        _this.isOnline = false;
-        _this.console = undefined;
-        _this.group = group;
-        _this.info = info;
-        _this.evaluateState();
-        return _this;
+var __1 = require("..");
+var logger = new logger_1.default('Client');
+var Client = /** @class */ (function () {
+    function Client() {
+        this.api = new __1.ApiConnection();
+        this.subscriptions = new __1.SubscriptionManager(this.api);
+        this.groupManager = new __1.GroupManager(this.subscriptions);
     }
-    Server.prototype.evaluateState = function () {
-        this.isOnline = !!this.info.online_ping && Date.now() - Date.parse(this.info.online_ping) < 10 * 60 * 1000;
-    };
-    //Provided by LiveList update
-    Server.prototype.onUpdate = function (oldInfo) {
-        this.evaluateState();
-        this.emit('update', this, oldInfo);
-    };
-    Server.prototype.onStatus = function (info) {
-        var cache = __assign({}, this.info);
-        Object.assign(this.info, info);
-        this.evaluateState();
-        logger.info(this.info.name + " received status. Online: " + this.isOnline + ". Players: " + (!this.info.online_players ? 0 : this.info.online_players.length));
-        this.emit('status', this, cache);
-    };
-    Server.prototype.getConsole = function () {
+    Client.prototype.init = function (config) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        if (this.console === undefined) {
-                            this.console = new ServerConnection_1.default(this);
-                            this.console.on('closed', this.consoleDisconnect.bind(this));
-                        }
-                        return [4 /*yield*/, this.console.waitReady()];
+                    case 0: return [4 /*yield*/, this.api.login(config)];
                     case 1:
                         _a.sent();
-                        return [2 /*return*/, this.console];
+                        return [4 /*yield*/, this.subscriptions.init()];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
                 }
             });
         });
     };
-    Server.prototype.consoleDisconnect = function () {
-        logger.error("Console to " + this.info.name + " disconnected.");
-        this.console = undefined;
-    };
-    return Server;
-}(tiny_typed_emitter_1.TypedEmitter));
-exports.default = Server;
+    return Client;
+}());
+exports.default = Client;

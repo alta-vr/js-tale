@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GroupInvite = void 0;
 var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('GroupInvite');
 var GroupInvite = /** @class */ (function () {
@@ -21,4 +20,4 @@ var GroupInvite = /** @class */ (function () {
     };
     return GroupInvite;
 }());
-exports.GroupInvite = GroupInvite;
+exports.default = GroupInvite;

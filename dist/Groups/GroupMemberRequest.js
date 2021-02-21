@@ -16,8 +16,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GroupMemberRequest = void 0;
-var GroupMember_1 = require("./GroupMember");
+var GroupMember_1 = __importDefault(require("./GroupMember"));
 var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('GroupMemberRequest');
 var GroupMemberRequest = /** @class */ (function (_super) {
@@ -34,5 +33,5 @@ var GroupMemberRequest = /** @class */ (function (_super) {
             .then(logger.thenInfo("Rejected " + this.username + " (" + this.userId + ")'s reqyest to join " + this.group.info.name + " (" + this.group.info.id + ")"));
     };
     return GroupMemberRequest;
-}(GroupMember_1.GroupMember));
-exports.GroupMemberRequest = GroupMemberRequest;
+}(GroupMember_1.default));
+exports.default = GroupMemberRequest;

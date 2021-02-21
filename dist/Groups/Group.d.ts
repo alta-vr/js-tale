@@ -1,13 +1,13 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
-import { GroupInfo } from './GroupInfo';
-import { GroupManager } from './GroupManager';
-import { LiveList } from '../Core/LiveList';
-import { GroupMember } from './GroupMember';
-import { GroupMemberRequest } from './GroupMemberRequest';
-import { GroupMemberInvite } from './GroupMemberInvite';
-import { GroupMemberBan } from './GroupMemberBan';
-import { Server } from './Server';
-import { ServerConnection } from "./ServerConnection";
+import GroupInfo from './GroupInfo';
+import GroupManager from './GroupManager';
+import LiveList from '../Core/LiveList';
+import GroupMember from './GroupMember';
+import GroupMemberRequest from './GroupMemberRequest';
+import GroupMemberInvite from './GroupMemberInvite';
+import GroupMemberBan from './GroupMemberBan';
+import Server from './Server';
+import ServerConnection from "./ServerConnection";
 interface GroupEvents {
     'member-create': (invite: GroupMember) => void;
     'member-delete': (invite: GroupMember) => void;
@@ -33,7 +33,7 @@ export declare class GroupServerList extends LiveList<Server> {
     refreshStatus(subscribe?: boolean): Promise<Server[]>;
     onStatus(data: any): Promise<void>;
 }
-export declare class Group extends EventEmitter<GroupEvents> {
+export default class Group extends EventEmitter<GroupEvents> {
     manager: GroupManager;
     info: GroupInfo;
     member: any;

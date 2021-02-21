@@ -52,14 +52,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Group = exports.GroupServerList = exports.GroupMemberList = void 0;
+exports.GroupServerList = exports.GroupMemberList = void 0;
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
-var LiveList_1 = require("../Core/LiveList");
-var GroupMember_1 = require("./GroupMember");
-var GroupMemberRequest_1 = require("./GroupMemberRequest");
-var GroupMemberInvite_1 = require("./GroupMemberInvite");
-var GroupMemberBan_1 = require("./GroupMemberBan");
-var Server_1 = require("./Server");
+var LiveList_1 = __importDefault(require("../Core/LiveList"));
+var GroupMember_1 = __importDefault(require("./GroupMember"));
+var GroupMemberRequest_1 = __importDefault(require("./GroupMemberRequest"));
+var GroupMemberInvite_1 = __importDefault(require("./GroupMemberInvite"));
+var GroupMemberBan_1 = __importDefault(require("./GroupMemberBan"));
+var Server_1 = __importDefault(require("./Server"));
 var logger_1 = __importDefault(require("../logger"));
 var GroupMemberList = /** @class */ (function (_super) {
     __extends(GroupMemberList, _super);
@@ -87,7 +87,7 @@ var GroupMemberList = /** @class */ (function (_super) {
         });
     };
     return GroupMemberList;
-}(LiveList_1.LiveList));
+}(LiveList_1.default));
 exports.GroupMemberList = GroupMemberList;
 var GroupServerList = /** @class */ (function (_super) {
     __extends(GroupServerList, _super);
@@ -101,7 +101,7 @@ var GroupServerList = /** @class */ (function (_super) {
                     .then(function (info) { return resolve(info.servers); })
                     .catch(reject);
             }
-        }); }, undefined, function (callback) { return group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (data) { return data.id; }, function (server) { return server.info.id; }, function (data) { return new Server_1.Server(group, data); }) || this;
+        }); }, undefined, function (callback) { return group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (data) { return data.id; }, function (server) { return server.info.id; }, function (data) { return new Server_1.default(group, data); }) || this;
         _this.isStatusLive = false;
         _this.group = group;
         _this.manager = group.manager;
@@ -169,7 +169,7 @@ var GroupServerList = /** @class */ (function (_super) {
         });
     };
     return GroupServerList;
-}(LiveList_1.LiveList));
+}(LiveList_1.default));
 exports.GroupServerList = GroupServerList;
 var logger = new logger_1.default('Group');
 var Group = /** @class */ (function (_super) {
@@ -185,10 +185,10 @@ var Group = /** @class */ (function (_super) {
         logger.log("Joined " + id + " - " + _this.info.name);
         //Must be done internally, as there is no me-group-update
         _this.manager.subscriptions.subscribe('group-update', id, _this.receiveNewInfo.bind(_this));
-        _this.members = _this.createList('members', 'member', true, true, function (data) { return new GroupMember_1.GroupMember(_this, data); });
-        _this.invites = _this.createList('invites', 'invite', false, false, function (data) { return new GroupMemberInvite_1.GroupMemberInvite(_this, data); });
-        _this.requests = _this.createList('requests', 'request', false, false, function (data) { return new GroupMemberRequest_1.GroupMemberRequest(_this, data); });
-        _this.bans = _this.createList('bans', 'ban', false, false, function (data) { return new GroupMemberBan_1.GroupMemberBan(_this, data); });
+        _this.members = _this.createList('members', 'member', true, true, function (data) { return new GroupMember_1.default(_this, data); });
+        _this.invites = _this.createList('invites', 'invite', false, false, function (data) { return new GroupMemberInvite_1.default(_this, data); });
+        _this.requests = _this.createList('requests', 'request', false, false, function (data) { return new GroupMemberRequest_1.default(_this, data); });
+        _this.bans = _this.createList('bans', 'ban', false, false, function (data) { return new GroupMemberBan_1.default(_this, data); });
         _this.servers = new GroupServerList(_this);
         _this.servers.refresh(true);
         _this.servers.on('create', function (data) { return _this.emit('server-create', data); });
@@ -285,4 +285,4 @@ var Group = /** @class */ (function (_super) {
     };
     return Group;
 }(tiny_typed_emitter_1.TypedEmitter));
-exports.Group = Group;
+exports.default = Group;

@@ -63,7 +63,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LiveList = void 0;
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
 var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('LiveList');
@@ -216,4 +215,4 @@ var LiveList = /** @class */ (function (_super) {
     };
     return LiveList;
 }(tiny_typed_emitter_1.TypedEmitter));
-exports.LiveList = LiveList;
+exports.default = LiveList;

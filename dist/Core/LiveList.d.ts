@@ -4,7 +4,7 @@ interface LiveListEvents<T> {
     'delete': (item: T) => void;
     'update': (item: T, old: T) => void;
 }
-export declare class LiveList<T> extends EventEmitter<LiveListEvents<T>> {
+export default class LiveList<T> extends EventEmitter<LiveListEvents<T>> {
     name: string;
     items: T[];
     isLive: boolean;

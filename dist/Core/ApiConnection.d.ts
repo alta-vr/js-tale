@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import http from 'http';
-import { Config } from './Config';
+import Config from './Config';
 export declare type HttpMethod = 'POST' | 'DELETE' | 'GET' | 'PUT' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 export declare class HttpError {
     method: HttpMethod;
@@ -13,7 +13,7 @@ export interface UserInfo {
     id: number;
     username: string;
 }
-export declare class ApiConnection {
+export default class ApiConnection {
     httpsAgent: http.Agent | undefined;
     headers: any;
     accessToken: string | undefined;

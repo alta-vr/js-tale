@@ -52,7 +52,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ServerConnection = void 0;
 var att_websockets_1 = require("att-websockets");
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
 var logger_1 = __importDefault(require("../logger"));
@@ -209,4 +208,4 @@ var ServerConnection = /** @class */ (function (_super) {
     };
     return ServerConnection;
 }(tiny_typed_emitter_1.TypedEmitter));
-exports.ServerConnection = ServerConnection;
+exports.default = ServerConnection;

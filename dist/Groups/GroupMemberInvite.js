@@ -16,8 +16,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GroupMemberInvite = void 0;
-var GroupMember_1 = require("./GroupMember");
+var GroupMember_1 = __importDefault(require("./GroupMember"));
 var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('GroupMemberInvite');
 var GroupMemberInvite = /** @class */ (function (_super) {
@@ -30,5 +29,5 @@ var GroupMemberInvite = /** @class */ (function (_super) {
             .then(logger.thenInfo("Revoked " + this.username + " (" + this.userId + ")'s invite to " + this.group.info.name + " (" + this.group.info.id + ")"));
     };
     return GroupMemberInvite;
-}(GroupMember_1.GroupMember));
-exports.GroupMemberInvite = GroupMemberInvite;
+}(GroupMember_1.default));
+exports.default = GroupMemberInvite;

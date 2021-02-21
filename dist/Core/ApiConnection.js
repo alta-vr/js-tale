@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ApiConnection = exports.HttpError = void 0;
+exports.HttpError = void 0;
 var simple_oauth2_1 = require("simple-oauth2");
 var jwt_decode_1 = __importDefault(require("jwt-decode"));
 var node_fetch_1 = __importDefault(require("node-fetch"));
@@ -160,4 +160,4 @@ var ApiConnection = /** @class */ (function () {
     };
     return ApiConnection;
 }());
-exports.ApiConnection = ApiConnection;
+exports.default = ApiConnection;

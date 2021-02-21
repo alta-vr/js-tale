@@ -16,8 +16,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GroupMemberBan = void 0;
-var GroupMember_1 = require("./GroupMember");
+var GroupMember_1 = __importDefault(require("./GroupMember"));
 var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('GroupMemberBan');
 var GroupMemberBan = /** @class */ (function (_super) {
@@ -30,5 +29,5 @@ var GroupMemberBan = /** @class */ (function (_super) {
             .then(logger.thenInfo("Revoked ban for " + this.userId));
     };
     return GroupMemberBan;
-}(GroupMember_1.GroupMember));
-exports.GroupMemberBan = GroupMemberBan;
+}(GroupMember_1.default));
+exports.default = GroupMemberBan;

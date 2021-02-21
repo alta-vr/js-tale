@@ -1,11 +1,11 @@
-import { Server } from "./Server";
+import Server from "./Server";
 interface GroupRole {
     role_id: number;
     name: string;
     color: string;
     permissions: string[];
 }
-export interface GroupInfo {
+export default interface GroupInfo {
     id: number;
     name: string;
     description: string;

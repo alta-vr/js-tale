@@ -1,12 +1,12 @@
 import { Message } from 'att-websockets';
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { Server } from './Server';
+import Server from './Server';
 interface ConsoleEvents {
     'closed': (console: ServerConnection, data: any) => void;
     'system': (console: ServerConnection, data: Message) => void;
     'error': (console: ServerConnection, data: any) => void;
 }
-export declare class ServerConnection extends TypedEmitter<ConsoleEvents> {
+export default class ServerConnection extends TypedEmitter<ConsoleEvents> {
     server: Server;
     private connection;
     private internalEmitter;

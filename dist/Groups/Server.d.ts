@@ -1,7 +1,7 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
 import { UserInfo } from '../Core/ApiConnection';
-import { Group } from './Group';
-import { ServerConnection } from './ServerConnection';
+import Group from './Group';
+import ServerConnection from './ServerConnection';
 interface ServerEvents {
     'update': (server: Server, old: ServerInfo) => void;
     'status': (server: Server, old: ServerInfo) => void;
@@ -20,7 +20,7 @@ export interface ServerInfo {
     group_id: number | undefined;
     type: string;
 }
-export declare class Server extends EventEmitter<ServerEvents> {
+export default class Server extends EventEmitter<ServerEvents> {
     group: Group;
     info: ServerInfo;
     isOnline: boolean;

@@ -52,12 +52,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GroupManager = void 0;
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
-var GroupRequest_1 = require("./GroupRequest");
-var GroupInvite_1 = require("./GroupInvite");
-var Group_1 = require("./Group");
-var LiveList_1 = require("../Core/LiveList");
+var GroupRequest_1 = __importDefault(require("./GroupRequest"));
+var GroupInvite_1 = __importDefault(require("./GroupInvite"));
+var Group_1 = __importDefault(require("./Group"));
+var LiveList_1 = __importDefault(require("../Core/LiveList"));
 var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('GroupManager');
 var GroupManager = /** @class */ (function (_super) {
@@ -66,14 +65,14 @@ var GroupManager = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.api = subscriptions.api;
         _this.subscriptions = subscriptions;
-        _this.groups = new LiveList_1.LiveList("groups", function () { return _this.api.fetch('GET', 'groups/joined'); }, function (id) { return _this.api.fetch('GET', "groups/" + id); }, function (callback) { return _this.subscriptions.subscribe('me-group-create', _this.api.userId, callback); }, function (callback) { return _this.subscriptions.subscribe('me-group-delete', _this.api.userId, callback); }, undefined, function (data) { return !!data.group ? data.group.id : data.id; }, function (group) { return group.info.id; }, function (data) { return !!data.group ? new Group_1.Group(_this, data.group, data.member) : new Group_1.Group(_this, data); });
+        _this.groups = new LiveList_1.default("groups", function () { return _this.api.fetch('GET', 'groups/joined'); }, function (id) { return _this.api.fetch('GET', "groups/" + id); }, function (callback) { return _this.subscriptions.subscribe('me-group-create', _this.api.userId, callback); }, function (callback) { return _this.subscriptions.subscribe('me-group-delete', _this.api.userId, callback); }, undefined, function (data) { return !!data.group ? data.group.id : data.id; }, function (group) { return group.info.id; }, function (data) { return !!data.group ? new Group_1.default(_this, data.group, data.member) : new Group_1.default(_this, data); });
         _this.groups.on('create', function (group) { return _this.emit('create', group); });
         _this.groups.on('delete', function (group) {
             group.dispose();
             _this.emit('delete', group);
         });
-        _this.invites = new LiveList_1.LiveList("invites", function () { return _this.api.fetch('GET', 'groups/invites'); }, undefined, function (callback) { return _this.subscriptions.subscribe('me-group-invite-create', _this.api.userId, callback); }, function (callback) { return _this.subscriptions.subscribe('me-group-invite-delete', _this.api.userId, callback); }, undefined, function (data) { return data.id; }, function (invite) { return invite.info.id; }, function (data) { return new GroupInvite_1.GroupInvite(_this, data); });
-        _this.requests = new LiveList_1.LiveList("requests", function () { return _this.api.fetch('GET', 'groups/requests'); }, undefined, function (callback) { return _this.subscriptions.subscribe('me-group-request-create', _this.api.userId, callback); }, function (callback) { return _this.subscriptions.subscribe('me-group-request-delete', _this.api.userId, callback); }, undefined, function (data) { return data.id; }, function (invite) { return invite.info.id; }, function (data) { return new GroupRequest_1.GroupRequest(_this, data); });
+        _this.invites = new LiveList_1.default("invites", function () { return _this.api.fetch('GET', 'groups/invites'); }, undefined, function (callback) { return _this.subscriptions.subscribe('me-group-invite-create', _this.api.userId, callback); }, function (callback) { return _this.subscriptions.subscribe('me-group-invite-delete', _this.api.userId, callback); }, undefined, function (data) { return data.id; }, function (invite) { return invite.info.id; }, function (data) { return new GroupInvite_1.default(_this, data); });
+        _this.requests = new LiveList_1.default("requests", function () { return _this.api.fetch('GET', 'groups/requests'); }, undefined, function (callback) { return _this.subscriptions.subscribe('me-group-request-create', _this.api.userId, callback); }, function (callback) { return _this.subscriptions.subscribe('me-group-request-delete', _this.api.userId, callback); }, undefined, function (data) { return data.id; }, function (invite) { return invite.info.id; }, function (data) { return new GroupRequest_1.default(_this, data); });
         return _this;
     }
     GroupManager.prototype.acceptAllInvites = function (subscribe) {
@@ -140,4 +139,4 @@ var GroupManager = /** @class */ (function (_super) {
     };
     return GroupManager;
 }(tiny_typed_emitter_1.TypedEmitter));
-exports.GroupManager = GroupManager;
+exports.default = GroupManager;
