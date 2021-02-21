@@ -49,12 +49,8 @@ Here's an example of a bot which will automatically connect to available servers
 ```
 const config = require('./config');
 
-import { ApiConnection } from 'js-tale/dist/Core/ApiConnection';
-import { SubscriptionManager } from 'js-tale/dist/Core/SubscriptionManager';
-import { GroupManager } from 'js-tale/dist/Groups/GroupManager';
-
+import { Client, Connection } from 'js-tale/dist';
 import Logger, { initLogger } from 'js-tale/dist/logger';
-import { Console } from 'js-tale/dist/Groups/Console';
 
 initLogger();
 
@@ -62,21 +58,17 @@ const logger = new Logger('Main');
 
 class Main
 {
-    api:ApiConnection = new ApiConnection();
-    subscriptions:SubscriptionManager = new SubscriptionManager(this.api);
-    groupManager:GroupManager = new GroupManager(this.subscriptions);
+    client:Client = new Client();
 
     async init()
     {
-        await this.api.login(config);
+        await this.client.init(config);
         
-        await this.subscriptions.init();
+        await this.client.groupManager.groups.refresh(true);
 
-        await this.groupManager.groups.refresh(true);
+        await this.client.groupManager.acceptAllInvites(true);
 
-        await this.groupManager.acceptAllInvites(true);
-
-        this.groupManager.automaticConsole(this.connectionOpened.bind(this));
+        this.client.groupManager.automaticConsole(this.connectionOpened.bind(this));
     }
 
     private connectionOpened(connection:Console)
@@ -98,6 +90,9 @@ main.init();
 
 ## Modules
 Currently att.js has the following modules:
+
+### Client (`Core/Client.ts`)
+Wraps Api Connection, Subscription Manager, and Group Manager for convenience.
 
 ### Api Connection (`Core/ApiConnection.ts`)
 Provides an access point to the API. Handles login, and fetch requests.
