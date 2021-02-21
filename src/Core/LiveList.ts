@@ -22,6 +22,7 @@ export class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     protected map:{[index:number]:T} = {};
 
     private getAll: () => Promise<any[]>;
+    protected getSingle: undefined|((id:number) => Promise<any>);
     private subscribeToCreate: (callback: (data: any) => void) => Promise<any>;
     private subscribeToDelete: (callback: (data: any) => void) => Promise<any>;
     private subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>);
@@ -29,11 +30,12 @@ export class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     private getId: (a: T) => number;
     private process: (data: any) => T;
     
-    constructor(name: string, getAll: () => Promise<any[]>, subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), getRawId: (data: any) => number, getId: (item: T) => number, process: (data: any) => T)
+    constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined|((id:number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), getRawId: (data: any) => number, getId: (item: T) => number, process: (data: any) => T)
     {
         super();
         this.name = name;
         this.getAll = getAll;
+        this.getSingle = getSingle;
         this.subscribeToCreate = subscribeToCreate;
         this.subscribeToDelete = subscribeToDelete;
         this.getRawId = getRawId;
@@ -41,8 +43,15 @@ export class LiveList<T> extends EventEmitter<LiveListEvents<T>>
         this.process = process;
     }
 
-    get(id:number) : T
+    async get(id:number) : Promise<T>
     {
+        if (!this.isLive && !this.map[id] && !!this.getSingle)
+        {
+            var item = await this.getSingle(id);
+
+            this.receiveCreate(item);
+        }
+
        return this.map[id]; 
     }
 

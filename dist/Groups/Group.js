@@ -63,19 +63,28 @@ var Server_1 = require("./Server");
 var logger_1 = __importDefault(require("../logger"));
 var GroupMemberList = /** @class */ (function (_super) {
     __extends(GroupMemberList, _super);
-    function GroupMemberList(name, getAll, subscribeToCreate, subscribeToDelete, subscribeToUpdate, process) {
-        return _super.call(this, name, getAll, subscribeToCreate, subscribeToDelete, subscribeToUpdate, function (data) { return data.user_id; }, function (item) { return item.userId; }, process) || this;
+    function GroupMemberList(name, getAll, getSingle, subscribeToCreate, subscribeToDelete, subscribeToUpdate, process) {
+        return _super.call(this, name, getAll, getSingle, subscribeToCreate, subscribeToDelete, subscribeToUpdate, function (data) { return data.user_id; }, function (item) { return item.userId; }, process) || this;
     }
     GroupMemberList.prototype.find = function (item) {
-        if (typeof item == 'string') {
-            var parsed = parseInt(item);
-            if (!isNaN(parsed)) {
-                return _super.prototype.get.call(this, parsed);
-            }
-            item = item.toLowerCase();
-            return this.items.find(function (test) { return test.username.toLowerCase() == item; });
-        }
-        return _super.prototype.get.call(this, item);
+        return __awaiter(this, void 0, void 0, function () {
+            var parsed;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(typeof item == 'string')) return [3 /*break*/, 3];
+                        parsed = parseInt(item);
+                        if (!!isNaN(parsed)) return [3 /*break*/, 2];
+                        return [4 /*yield*/, _super.prototype.get.call(this, parsed)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                    case 2:
+                        item = item.toLowerCase();
+                        return [2 /*return*/, this.items.find(function (test) { return test.username.toLowerCase() == item; })];
+                    case 3: return [4 /*yield*/, _super.prototype.get.call(this, item)];
+                    case 4: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
     };
     return GroupMemberList;
 }(LiveList_1.LiveList));
@@ -83,7 +92,16 @@ exports.GroupMemberList = GroupMemberList;
 var GroupServerList = /** @class */ (function (_super) {
     __extends(GroupServerList, _super);
     function GroupServerList(group) {
-        var _this = _super.call(this, group.info.name + " servers", function () { return new Promise(function (resolve) { return resolve(group.info.servers); }); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (data) { return data.id; }, function (server) { return server.info.id; }, function (data) { return new Server_1.Server(group, data); }) || this;
+        var _this = _super.call(this, group.info.name + " servers", function () { return new Promise(function (resolve, reject) {
+            if (!!group.info.servers) {
+                resolve(group.info.servers);
+            }
+            else if (!!_this.getSingle) {
+                _this.getSingle(group.info.id)
+                    .then(function (info) { return resolve(info.servers); })
+                    .catch(reject);
+            }
+        }); }, undefined, function (callback) { return group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (callback) { return group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback); }, function (data) { return data.id; }, function (server) { return server.info.id; }, function (data) { return new Server_1.Server(group, data); }) || this;
         _this.isStatusLive = false;
         _this.group = group;
         _this.manager = group.manager;
@@ -131,14 +149,24 @@ var GroupServerList = /** @class */ (function (_super) {
         });
     };
     GroupServerList.prototype.onStatus = function (data) {
-        var server = this.get(data.content.id);
-        if (!!server) {
-            server.onStatus(data.content);
-        }
-        else {
-            logger.error("Unknown server in " + this.group.info.name);
-            console.log(data);
-        }
+        return __awaiter(this, void 0, void 0, function () {
+            var server;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.get(data.content.id)];
+                    case 1:
+                        server = _a.sent();
+                        if (!!server) {
+                            server.onStatus(data.content);
+                        }
+                        else {
+                            logger.error("Unknown server in " + this.group.info.name);
+                            console.log(data);
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
     };
     return GroupServerList;
 }(LiveList_1.LiveList));
@@ -157,23 +185,23 @@ var Group = /** @class */ (function (_super) {
         logger.log("Joined " + id + " - " + _this.info.name);
         //Must be done internally, as there is no me-group-update
         _this.manager.subscriptions.subscribe('group-update', id, _this.receiveNewInfo.bind(_this));
-        _this.members = _this.createList('members', 'member', true, function (data) { return new GroupMember_1.GroupMember(_this, data); });
-        _this.invites = _this.createList('invites', 'invite', false, function (data) { return new GroupMemberInvite_1.GroupMemberInvite(_this, data); });
-        _this.requests = _this.createList('requests', 'request', false, function (data) { return new GroupMemberRequest_1.GroupMemberRequest(_this, data); });
-        _this.bans = _this.createList('bans', 'ban', false, function (data) { return new GroupMemberBan_1.GroupMemberBan(_this, data); });
+        _this.members = _this.createList('members', 'member', true, true, function (data) { return new GroupMember_1.GroupMember(_this, data); });
+        _this.invites = _this.createList('invites', 'invite', false, false, function (data) { return new GroupMemberInvite_1.GroupMemberInvite(_this, data); });
+        _this.requests = _this.createList('requests', 'request', false, false, function (data) { return new GroupMemberRequest_1.GroupMemberRequest(_this, data); });
+        _this.bans = _this.createList('bans', 'ban', false, false, function (data) { return new GroupMemberBan_1.GroupMemberBan(_this, data); });
         _this.servers = new GroupServerList(_this);
         _this.servers.on('create', function (data) { return _this.emit('server-create', data); });
         _this.servers.on('delete', function (data) { return _this.emit('server-delete', data); });
         _this.servers.on('update', function (item, old) { return item.onUpdate(old.info); });
         return _this;
     }
-    Group.prototype.createList = function (route, name, hasUpdate, create) {
+    Group.prototype.createList = function (route, name, hasSingle, hasUpdate, create) {
         var _this = this;
         var id = this.info.id;
         var createSub = "group-" + name + "-create";
         var deleteSub = "group-" + name + "-delete";
         var updateSub = "group-" + name + "-update";
-        var list = new GroupMemberList(this.info.name + " " + name, function () { return _this.manager.api.fetch('GET', "groups/" + id + "/" + route); }, function (callback) { return _this.manager.subscriptions.subscribe(createSub, id, callback); }, function (callback) { return _this.manager.subscriptions.subscribe(deleteSub, id, callback); }, hasUpdate ? function (callback) { return _this.manager.subscriptions.subscribe(updateSub, id, callback); } : undefined, create);
+        var list = new GroupMemberList(this.info.name + " " + name, function () { return _this.manager.api.fetch('GET', "groups/" + id + "/" + route); }, hasSingle ? function (user) { return _this.manager.api.fetch('GET', "groups/" + id + "/" + route + "/" + user); } : undefined, function (callback) { return _this.manager.subscriptions.subscribe(createSub, id, callback); }, function (callback) { return _this.manager.subscriptions.subscribe(deleteSub, id, callback); }, hasUpdate ? function (callback) { return _this.manager.subscriptions.subscribe(updateSub, id, callback); } : undefined, create);
         var createEvent = name + "-create";
         var deleteEvent = name + "-delete";
         list.on('create', function (data) { return _this.emit(createEvent, data); });

@@ -13,14 +13,15 @@ export declare class LiveList<T> extends EventEmitter<LiveListEvents<T>> {
         [index: number]: T;
     };
     private getAll;
+    protected getSingle: undefined | ((id: number) => Promise<any>);
     private subscribeToCreate;
     private subscribeToDelete;
     private subscribeToUpdate;
     private getRawId;
     private getId;
     private process;
-    constructor(name: string, getAll: () => Promise<any[]>, subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined | ((callback: (data: any) => void) => Promise<any>), getRawId: (data: any) => number, getId: (item: T) => number, process: (data: any) => T);
-    get(id: number): T;
+    constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined | ((id: number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined | ((callback: (data: any) => void) => Promise<any>), getRawId: (data: any) => number, getId: (item: T) => number, process: (data: any) => T);
+    get(id: number): Promise<T>;
     refresh(subscribe?: boolean): Promise<T[]>;
     private block;
     private receiveCreate;

@@ -22,8 +22,8 @@ interface GroupEvents {
     'update': (info: Group) => void;
 }
 export declare class GroupMemberList<T extends GroupMember> extends LiveList<T> {
-    constructor(name: string, getAll: () => Promise<any[]>, subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined | ((callback: (data: any) => void) => Promise<any>), process: (data: any) => T);
-    find(item: number | string): T | undefined;
+    constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined | ((id: number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined | ((callback: (data: any) => void) => Promise<any>), process: (data: any) => T);
+    find(item: number | string): Promise<T | undefined>;
 }
 export declare class GroupServerList extends LiveList<Server> {
     group: Group;
@@ -31,7 +31,7 @@ export declare class GroupServerList extends LiveList<Server> {
     isStatusLive: boolean;
     constructor(group: Group);
     refreshStatus(subscribe?: boolean): Promise<Server[]>;
-    onStatus(data: any): void;
+    onStatus(data: any): Promise<void>;
 }
 export declare class Group extends EventEmitter<GroupEvents> {
     manager: GroupManager;
@@ -44,7 +44,7 @@ export declare class Group extends EventEmitter<GroupEvents> {
     servers: GroupServerList;
     private isConsoleAutomatic;
     constructor(manager: GroupManager, info: GroupInfo, member?: any | undefined);
-    createList<T extends GroupMember>(route: string, name: string, hasUpdate: boolean, create: (data: any) => T): GroupMemberList<T>;
+    createList<T extends GroupMember>(route: string, name: string, hasSingle: boolean, hasUpdate: boolean, create: (data: any) => T): GroupMemberList<T>;
     dispose(): void;
     leave(): Promise<any>;
     invite(userId: number): Promise<any>;

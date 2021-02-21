@@ -69,7 +69,7 @@ var logger_1 = __importDefault(require("../logger"));
 var logger = new logger_1.default('LiveList');
 var LiveList = /** @class */ (function (_super) {
     __extends(LiveList, _super);
-    function LiveList(name, getAll, subscribeToCreate, subscribeToDelete, subscribeToUpdate, getRawId, getId, process) {
+    function LiveList(name, getAll, getSingle, subscribeToCreate, subscribeToDelete, subscribeToUpdate, getRawId, getId, process) {
         var _this = _super.call(this) || this;
         _this.items = [];
         _this.isLive = false;
@@ -77,6 +77,7 @@ var LiveList = /** @class */ (function (_super) {
         _this.map = {};
         _this.name = name;
         _this.getAll = getAll;
+        _this.getSingle = getSingle;
         _this.subscribeToCreate = subscribeToCreate;
         _this.subscribeToDelete = subscribeToDelete;
         _this.getRawId = getRawId;
@@ -85,7 +86,21 @@ var LiveList = /** @class */ (function (_super) {
         return _this;
     }
     LiveList.prototype.get = function (id) {
-        return this.map[id];
+        return __awaiter(this, void 0, void 0, function () {
+            var item;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(!this.isLive && !this.map[id] && !!this.getSingle)) return [3 /*break*/, 2];
+                        return [4 /*yield*/, this.getSingle(id)];
+                    case 1:
+                        item = _a.sent();
+                        this.receiveCreate(item);
+                        _a.label = 2;
+                    case 2: return [2 /*return*/, this.map[id]];
+                }
+            });
+        });
     };
     LiveList.prototype.refresh = function (subscribe) {
         if (subscribe === void 0) { subscribe = false; }

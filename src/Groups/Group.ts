@@ -28,12 +28,12 @@ interface GroupEvents
 
 export class GroupMemberList<T extends GroupMember> extends LiveList<T>
 {
-    constructor(name: string, getAll: () => Promise<any[]>, subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), process: (data: any) => T)
+    constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined|((id:number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), process: (data: any) => T)
     {
-        super(name, getAll, subscribeToCreate, subscribeToDelete, subscribeToUpdate, data => data.user_id, item => item.userId, process);
+        super(name, getAll, getSingle, subscribeToCreate, subscribeToDelete, subscribeToUpdate, data => data.user_id, item => item.userId, process);
     }
 
-    find(item:number|string) : T|undefined
+    async find(item:number|string) : Promise<T|undefined>
     {
         if (typeof item == 'string')
         {
@@ -41,14 +41,14 @@ export class GroupMemberList<T extends GroupMember> extends LiveList<T>
 
             if (!isNaN(parsed))
             {
-                return super.get(parsed);
+                return await super.get(parsed);
             }
             
             item = item.toLowerCase();
             return this.items.find(test => test.username.toLowerCase() == item);
         }
 
-        return super.get(item);
+        return await super.get(item);
     }
 }
 
@@ -61,7 +61,20 @@ export class GroupServerList extends LiveList<Server>
     constructor(group:Group)
     {
         super(`${group.info.name} servers`,
-        () => new Promise(resolve => resolve(group.info.servers)),
+        () => new Promise((resolve, reject) => 
+        {
+            if (!!group.info.servers)
+            {
+                resolve(group.info.servers);
+            }
+            else if (!!this.getSingle)
+            {
+                this.getSingle(group.info.id)
+                .then(info => resolve(info.servers))
+                .catch(reject);
+            }
+        }),
+        undefined,
         callback => group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback),
         callback => group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback),
         callback => group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback),
@@ -106,9 +119,9 @@ export class GroupServerList extends LiveList<Server>
         return this.items;
     }
     
-    onStatus(data:any)
+    async onStatus(data:any)
     {
-        var server = this.get(data.content.id);
+        var server = await this.get(data.content.id);
 
         if (!!server)
         {
@@ -151,10 +164,10 @@ export class Group extends EventEmitter<GroupEvents>
         //Must be done internally, as there is no me-group-update
         this.manager.subscriptions.subscribe('group-update', id, this.receiveNewInfo.bind(this));
 
-        this.members = this.createList('members', 'member', true, data => new GroupMember(this, data));
-        this.invites = this.createList('invites', 'invite', false, data => new GroupMemberInvite(this, data));
-        this.requests = this.createList('requests', 'request', false,  data => new GroupMemberRequest(this, data));
-        this.bans = this.createList('bans', 'ban', false, data => new GroupMemberBan(this, data));
+        this.members = this.createList('members', 'member', true, true, data => new GroupMember(this, data));
+        this.invites = this.createList('invites', 'invite', false, false, data => new GroupMemberInvite(this, data));
+        this.requests = this.createList('requests', 'request', false, false,  data => new GroupMemberRequest(this, data));
+        this.bans = this.createList('bans', 'ban', false, false, data => new GroupMemberBan(this, data));
         
         this.servers = new GroupServerList(this);
 
@@ -163,7 +176,7 @@ export class Group extends EventEmitter<GroupEvents>
         this.servers.on('update', (item, old) => item.onUpdate(old.info));
     }
 
-    createList<T extends GroupMember>(route: string, name: string, hasUpdate:boolean, create: (data: any) => T): GroupMemberList<T>
+    createList<T extends GroupMember>(route: string, name: string, hasSingle:boolean, hasUpdate:boolean, create: (data: any) => T): GroupMemberList<T>
     {
         var id = this.info.id;
         
@@ -173,6 +186,7 @@ export class Group extends EventEmitter<GroupEvents>
         
         var list: GroupMemberList<T> = new GroupMemberList(`${this.info.name} ${name}`, 
             () => this.manager.api.fetch('GET', `groups/${id}/${route}`), 
+            hasSingle ? user => this.manager.api.fetch('GET', `groups/${id}/${route}/${user}`) : undefined,
             callback => this.manager.subscriptions.subscribe(createSub, id, callback), 
             callback => this.manager.subscriptions.subscribe(deleteSub, id, callback), 
             hasUpdate ? callback => this.manager.subscriptions.subscribe(updateSub, id, callback) : undefined,
