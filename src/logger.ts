@@ -9,10 +9,30 @@ declare global
     }
 }
 
+
 var cacheLog = console.log;
 var cacheInfo = console.info;
 var cacheWarn = console.warn;
 var cacheError = console.error;
+
+var log = (level:string, value:any) =>
+{
+    switch (level)
+    {
+        case 'log' : cacheLog(value); return;
+        case 'info' : cacheInfo(value); return;
+        case 'warn' : cacheWarn(value); return;
+        case 'error' : cacheError(value); return;
+    }
+
+    cacheInfo(value);
+}
+
+
+export function forward(handler:(level:string, value:any)=>void)
+{
+    log = handler;
+}
 
 export function initLogger()
 {
@@ -68,7 +88,7 @@ export default class Logger
         {
             value = this.formatLog(value);
 
-            cacheLog(chalk.gray(value));
+            log('log', chalk.gray(value));
         }
     }
     
@@ -83,7 +103,7 @@ export default class Logger
         {
             value = this.formatLog(value);
 
-            cacheLog(chalk.gray(value));
+            log('log', chalk.gray(value));
         }
     }
 
@@ -98,7 +118,7 @@ export default class Logger
         {
             value = this.formatLog(value);
 
-            cacheInfo(value);
+            log('info', value);
         }
     }
 
@@ -113,7 +133,7 @@ export default class Logger
         {
             value = this.formatLog(value);
 
-            cacheInfo(chalk.bold.green(value));
+            log('info', chalk.bold.green(value));
         }
     }
 
@@ -128,7 +148,7 @@ export default class Logger
         {
             value = this.formatLog(value);
 
-            cacheWarn(chalk.yellow(value));
+            log('warn', chalk.yellow(value));
         }
     }
     
@@ -143,7 +163,7 @@ export default class Logger
         {
             value = this.formatLog(value);
 
-            cacheError(chalk.bold.red(value));
+            log('error', chalk.bold.red(value));
         }
     }
     
@@ -156,6 +176,6 @@ export default class Logger
     {
         value = this.formatLog(value);
 
-        cacheError(chalk.bold.bgRed(value));
+        log('error', chalk.bold.bgRed(value));
     }
 }

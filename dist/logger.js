@@ -14,12 +14,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initLogger = void 0;
+exports.initLogger = exports.forward = void 0;
 var chalk_1 = __importDefault(require("chalk"));
 var cacheLog = console.log;
 var cacheInfo = console.info;
 var cacheWarn = console.warn;
 var cacheError = console.error;
+var log = function (level, value) {
+    switch (level) {
+        case 'log':
+            cacheLog(value);
+            return;
+        case 'info':
+            cacheInfo(value);
+            return;
+        case 'warn':
+            cacheWarn(value);
+            return;
+        case 'error':
+            cacheError(value);
+            return;
+    }
+    cacheInfo(value);
+};
+function forward(handler) {
+    log = handler;
+}
+exports.forward = forward;
 function initLogger() {
     console = __assign(__assign({}, console), new Logger(undefined, 0));
 }
@@ -54,7 +75,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.trace = function (value) {
         if (Logger.levels[this.tag] <= 0) {
             value = this.formatLog(value);
-            cacheLog(chalk_1.default.gray(value));
+            log('log', chalk_1.default.gray(value));
         }
     };
     Logger.prototype.thenLog = function (message) {
@@ -64,7 +85,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.log = function (value) {
         if (Logger.levels[this.tag] <= 1) {
             value = this.formatLog(value);
-            cacheLog(chalk_1.default.gray(value));
+            log('log', chalk_1.default.gray(value));
         }
     };
     Logger.prototype.thenInfo = function (message) {
@@ -74,7 +95,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.info = function (value) {
         if (Logger.levels[this.tag] <= 2) {
             value = this.formatLog(value);
-            cacheInfo(value);
+            log('info', value);
         }
     };
     Logger.prototype.thenSuccess = function (message) {
@@ -84,7 +105,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.success = function (value) {
         if (Logger.levels[this.tag] <= 3) {
             value = this.formatLog(value);
-            cacheInfo(chalk_1.default.bold.green(value));
+            log('info', chalk_1.default.bold.green(value));
         }
     };
     Logger.prototype.thenWarn = function (message) {
@@ -94,7 +115,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.warn = function (value) {
         if (Logger.levels[this.tag] <= 3) {
             value = this.formatLog(value);
-            cacheWarn(chalk_1.default.yellow(value));
+            log('warn', chalk_1.default.yellow(value));
         }
     };
     Logger.prototype.thenError = function (message) {
@@ -104,7 +125,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.error = function (value) {
         if (Logger.levels[this.tag] <= 4) {
             value = this.formatLog(value);
-            cacheError(chalk_1.default.bold.red(value));
+            log('error', chalk_1.default.bold.red(value));
         }
     };
     Logger.prototype.thenFatal = function (message) {
@@ -113,7 +134,7 @@ var Logger = /** @class */ (function () {
     };
     Logger.prototype.fatal = function (value) {
         value = this.formatLog(value);
-        cacheError(chalk_1.default.bold.bgRed(value));
+        log('error', chalk_1.default.bold.bgRed(value));
     };
     Logger.levels = {};
     return Logger;

@@ -3,12 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ServerConnection = exports.GroupRequest = exports.GroupMemberRequest = exports.GroupMemberInvite = exports.GroupMemberBan = exports.GroupMember = exports.GroupManager = exports.GroupInvite = exports.Server = exports.Group = exports.SubscriptionManager = exports.HttpError = exports.ApiConnection = exports.Client = void 0;
+exports.ServerConnection = exports.GroupRequest = exports.GroupMemberRequest = exports.GroupMemberInvite = exports.GroupMemberBan = exports.GroupMember = exports.GroupManager = exports.GroupInvite = exports.Server = exports.Group = exports.SubscriptionManager = exports.Profile = exports.HttpError = exports.ApiConnection = exports.Client = void 0;
 var Client_1 = require("./Core/Client");
 Object.defineProperty(exports, "Client", { enumerable: true, get: function () { return __importDefault(Client_1).default; } });
 var ApiConnection_1 = require("./Core/ApiConnection");
 Object.defineProperty(exports, "ApiConnection", { enumerable: true, get: function () { return __importDefault(ApiConnection_1).default; } });
 Object.defineProperty(exports, "HttpError", { enumerable: true, get: function () { return ApiConnection_1.HttpError; } });
+var Profile_1 = require("./Core/Profile");
+Object.defineProperty(exports, "Profile", { enumerable: true, get: function () { return __importDefault(Profile_1).default; } });
 var SubscriptionManager_1 = require("./Core/SubscriptionManager");
 Object.defineProperty(exports, "SubscriptionManager", { enumerable: true, get: function () { return __importDefault(SubscriptionManager_1).default; } });
 var Group_1 = require("./Groups/Group");

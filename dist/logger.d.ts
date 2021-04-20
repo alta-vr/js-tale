@@ -4,6 +4,7 @@ declare global {
         fatal(value: any): void;
     }
 }
+export declare function forward(handler: (level: string, value: any) => void): void;
 export declare function initLogger(): void;
 export default class Logger {
     tag: any;

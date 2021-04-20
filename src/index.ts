@@ -1,5 +1,6 @@
 export { default as Client } from './Core/Client';
 export { default as ApiConnection, UserInfo, HttpError } from './Core/ApiConnection';
+export { default as Profile } from './Core/Profile';
 export { default as SubscriptionManager } from './Core/SubscriptionManager';
 export { default as Config } from './Core/Config';
 export { default as Group } from './Groups/Group';
