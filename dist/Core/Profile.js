@@ -25,6 +25,10 @@ var Profile = /** @class */ (function () {
     Profile.prototype.getVerified = function () {
         return this.api.decodedToken.is_verified;
     };
+    Profile.prototype.getSupporter = function () {
+        //TODO: Add supporter to profile
+        return undefined;
+    };
     Profile.prototype.requestVerificationEmail = function (email) {
         if (!this.getVerified()) {
             logger.info("Requesting verification");

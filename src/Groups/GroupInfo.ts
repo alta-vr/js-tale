@@ -1,6 +1,6 @@
 import Server from "./Server";
 
-interface GroupRole
+export interface GroupRole
 {
     role_id: number;
     name: string;

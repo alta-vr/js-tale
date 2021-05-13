@@ -218,6 +218,9 @@ var Group = /** @class */ (function (_super) {
     Group.prototype.invite = function (userId) {
         return this.manager.api.fetch('POST', "groups/" + this.info.id + "/invites/" + userId);
     };
+    Group.prototype.editInfo = function (edit) {
+        return this.manager.api.fetch('PATCH', "groups/" + this.info.id, edit);
+    };
     Group.prototype.receiveNewInfo = function (event) {
         this.manager.groups.receiveUpdate(event);
         this.emit('update', this);

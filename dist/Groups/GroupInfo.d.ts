@@ -1,5 +1,5 @@
 import Server from "./Server";
-interface GroupRole {
+export interface GroupRole {
     role_id: number;
     name: string;
     color: string;
@@ -17,4 +17,3 @@ export default interface GroupInfo {
     allowed_servers_count: number;
     servers: Server[];
 }
-export {};

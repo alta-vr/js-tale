@@ -1,6 +1,6 @@
 import { ClientCredentials, AccessToken, Token, ModuleOptions, ResourceOwnerPassword } from 'simple-oauth2';
 import decode from 'jwt-decode';
-import fetchInternal from 'node-fetch';
+import nodeFetch from 'node-fetch';
 import https from 'https';
 import http from 'http';
 
@@ -11,6 +11,15 @@ import sha512 from "crypto-js/sha512";
 import { TypedEmitter } from 'tiny-typed-emitter';
 
 export type HttpMethod = 'POST' | 'DELETE' | 'GET' | 'PUT' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
+
+try
+{
+    var fetchInternal = nodeFetch.bind(window);
+}
+catch (e)
+{
+    var fetchInternal = nodeFetch;
+}
 
 export class HttpError
 {
@@ -79,7 +88,7 @@ export default class ApiConnection extends TypedEmitter<Events>
             auth: {
                 tokenHost: config.tokenHost || "https://accounts.townshiptale.com",
                 tokenPath: "/connect/token",
-                authorizePath: "/connect/authorize"
+                authorizePath: "/connect/authorize",
             }
         };
     }
@@ -140,6 +149,8 @@ export default class ApiConnection extends TypedEmitter<Events>
         try
         {   
             this.accessToken = await client.getToken(tokenParams);
+
+
         }
         catch (e)
         {
@@ -215,7 +226,7 @@ export default class ApiConnection extends TypedEmitter<Events>
         {
             this.httpsAgent = this.endpoint!.startsWith('https') ? new https.Agent() : new http.Agent();
         }
-
+        
         if (!this.userId && !!this.decodedToken)
         {
             this.userId = this.decodedToken.client_sub || this.decodedToken.sub;
@@ -240,12 +251,19 @@ export default class ApiConnection extends TypedEmitter<Events>
             return;
         }
     
-        if (!this.refresh && this.accessToken.expired(15))
+        if (!this.refresh && this.accessToken.expired())
         {
             this.refresh = this.refreshInternal();
         }
         
         await this.refresh;
+
+        this.refresh = undefined;
+    }
+
+    forceRefresh()
+    {
+        return this.refreshInternal();
     }
 
     private async refreshInternal()

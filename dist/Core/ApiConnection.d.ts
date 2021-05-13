@@ -40,6 +40,7 @@ export default class ApiConnection extends TypedEmitter<Events> {
     loadResourceOwner(config: Config, accessToken: object): Promise<void>;
     private setupHttpsClient;
     private checkRefresh;
+    forceRefresh(): Promise<void>;
     private refreshInternal;
     fetch(method: HttpMethod, path: string, body?: any | undefined): Promise<any>;
     resolveUsernameOrId(value: string | number): Promise<any>;

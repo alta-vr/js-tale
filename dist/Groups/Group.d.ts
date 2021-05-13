@@ -48,6 +48,7 @@ export default class Group extends EventEmitter<GroupEvents> {
     dispose(): void;
     leave(): Promise<any>;
     invite(userId: number): Promise<any>;
+    editInfo(edit: any): Promise<any>;
     private receiveNewInfo;
     automaticConsole(callback: (console: ServerConnection) => void): Promise<void>;
 }

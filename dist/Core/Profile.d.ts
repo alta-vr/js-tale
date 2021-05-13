@@ -7,5 +7,6 @@ export default class Profile {
     getId(): any;
     getUsername(): any;
     getVerified(): any;
+    getSupporter(): undefined;
     requestVerificationEmail(email: string): Promise<any> | undefined;
 }

@@ -61,6 +61,12 @@ var http_1 = __importDefault(require("http"));
 var logger_1 = __importDefault(require("../logger"));
 var sha512_1 = __importDefault(require("crypto-js/sha512"));
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
+try {
+    var fetchInternal = node_fetch_1.default.bind(window);
+}
+catch (e) {
+    var fetchInternal = node_fetch_1.default;
+}
 var HttpError = /** @class */ (function () {
     function HttpError(method, path, code, message) {
         this.method = method;
@@ -104,7 +110,7 @@ var ApiConnection = /** @class */ (function (_super) {
             auth: {
                 tokenHost: config.tokenHost || "https://accounts.townshiptale.com",
                 tokenPath: "/connect/token",
-                authorizePath: "/connect/authorize"
+                authorizePath: "/connect/authorize",
             }
         };
     };
@@ -254,16 +260,20 @@ var ApiConnection = /** @class */ (function (_super) {
                         if (this.accessToken == undefined) {
                             return [2 /*return*/];
                         }
-                        if (!this.refresh && this.accessToken.expired(15)) {
+                        if (!this.refresh && this.accessToken.expired()) {
                             this.refresh = this.refreshInternal();
                         }
                         return [4 /*yield*/, this.refresh];
                     case 1:
                         _a.sent();
+                        this.refresh = undefined;
                         return [2 /*return*/];
                 }
             });
         });
+    };
+    ApiConnection.prototype.forceRefresh = function () {
+        return this.refreshInternal();
     };
     ApiConnection.prototype.refreshInternal = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -316,7 +326,7 @@ var ApiConnection = /** @class */ (function (_super) {
                         _a.sent();
                         logger.info("HEADERS");
                         logger.info(this.headers);
-                        return [4 /*yield*/, node_fetch_1.default(this.endpoint + path, {
+                        return [4 /*yield*/, fetchInternal(this.endpoint + path, {
                                 headers: this.headers,
                                 method: method,
                                 agent: this.httpsAgent,

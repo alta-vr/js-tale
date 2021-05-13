@@ -38,6 +38,12 @@ export default class Profile
     {
         return this.api.decodedToken.is_verified;
     }
+
+    getSupporter()
+    {
+        //TODO: Add supporter to profile
+        return undefined;
+    }
     
     requestVerificationEmail(email:string)
     {

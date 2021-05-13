@@ -217,6 +217,11 @@ export default class Group extends EventEmitter<GroupEvents>
         return this.manager.api.fetch('POST', `groups/${this.info.id}/invites/${userId}`);
     }
 
+    editInfo(edit:any)
+    {
+        return this.manager.api.fetch('PATCH', `groups/${this.info.id}`, edit);
+    }
+
     private receiveNewInfo(event: any)
     {
         this.manager.groups.receiveUpdate(event);
