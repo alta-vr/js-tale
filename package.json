@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "publish": "npm version patch && git add --all && git commit --m 'published' && git push"
   },
   "author": "Joel",
