@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "publish": "npm version patch && git add --all && git commit --m 'published' && git push"
+    "publish": "echo \"Run the following:\n- npm version patch && git add --all && git commit --m 'published' && git push\n- git tag vX.Y.Z (matching the new package.json version)\n- git push origin --tags\n- (complete the release on GitHub)\n- npm publish\""
   },
   "author": "Joel",
   "license": "GPL 3.0",
