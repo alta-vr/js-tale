@@ -11,6 +11,7 @@
   "author": "Joel",
   "license": "GPL 3.0",
   "dependencies": {
+    "alta-jsapi": "^1.1.5",
     "att-websockets": "git+https://git@github.com/alta-vr/att-websockets.git",
     "chalk": "^4.1.0",
     "crypto-js": "^4.0.0",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/crypto-js": "^4.0.1",
+    "@types/memoizee": "^0.4.5",
     "@types/node": "^14.14.31",
     "@types/node-fetch": "^2.5.8",
     "@types/simple-oauth2": "^4.1.0",

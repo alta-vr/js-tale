@@ -1,4 +1,6 @@
-import { Connection, BasicWrapper, Message, MessageType } from 'att-websockets';
+import { Connection, Message, MessageType } from 'att-websockets';
+import { JsapiAccessProvider } from 'att-websockets/dist/connection';
+import { Servers } from 'alta-jsapi';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import Logger from '../logger';
 import { EventEmitter } from 'events';
@@ -18,7 +20,9 @@ const logger = new Logger('ServerConnection');
 export default class ServerConnection extends TypedEmitter<ConsoleEvents>
 {
     server:Server;
-    
+
+    private accessProvider:JsapiAccessProvider;
+
     private connection:Connection;
 
     private internalEmitter:EventEmitter = new EventEmitter();
@@ -34,7 +38,8 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
         console.log("Creating server connection");
 
         this.server = server;
-        this.connection = new Connection(this.server.info.name);
+        this.accessProvider = new JsapiAccessProvider(this.server.info.id, Servers);
+        this.connection = new Connection(this.accessProvider, this.server.info.name);
         
         this.connection.onMessage = this.handleMessage.bind(this);
         this.connection.onError = this.handleError.bind(this);
@@ -69,7 +74,7 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
                     {
                         logger.success(`Connecting to ${this.server.info.name}`);
                     
-                        await this.connection.connect(details.connection.address, details.connection.websocket_port, details.token);
+                        await this.connection.open();
             
                         this.isAllowed = true;
                         this.initializing = undefined;
