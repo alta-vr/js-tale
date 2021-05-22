@@ -10,7 +10,7 @@
   "author": "Joel",
   "license": "GPL 3.0",
   "dependencies": {
-    "att-websockets": "git+https://git@github.com/alta-vr/att-websockets.git",
+    "att-websockets": "^1.1.4",
     "chalk": "^4.1.0",
     "crypto-js": "^4.0.0",
     "jwt-decode": "^3.1.2",

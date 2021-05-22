@@ -56,7 +56,17 @@ var att_websockets_1 = require("att-websockets");
 var tiny_typed_emitter_1 = require("tiny-typed-emitter");
 var logger_1 = __importDefault(require("../logger"));
 var events_1 = require("events");
+var connection_1 = require("att-websockets/dist/connection");
 var logger = new logger_1.default('ServerConnection');
+var ApiCaller = /** @class */ (function () {
+    function ApiCaller(api) {
+        this.api = api;
+    }
+    ApiCaller.prototype.joinConsole = function (id, start) {
+        return this.api.fetch('POST', "servers/" + id + "/console", {});
+    };
+    return ApiCaller;
+}());
 var ServerConnection = /** @class */ (function (_super) {
     __extends(ServerConnection, _super);
     function ServerConnection(server) {
@@ -64,7 +74,9 @@ var ServerConnection = /** @class */ (function (_super) {
         _this.internalEmitter = new events_1.EventEmitter();
         console.log("Creating server connection");
         _this.server = server;
-        _this.connection = new att_websockets_1.Connection(_this.server.info.name);
+        _this.accessProvider = new connection_1.JsapiAccessProvider(_this.server.info.id, new ApiCaller(server.group.manager.api));
+        _this.connection = new att_websockets_1.Connection(_this.accessProvider, _this.server.info.name);
+        _this.apiCaller = new ApiCaller(server.group.manager.api);
         _this.connection.onMessage = _this.handleMessage.bind(_this);
         _this.connection.onError = _this.handleError.bind(_this);
         _this.connection.onClose = _this.handleClose.bind(_this);
@@ -81,43 +93,36 @@ var ServerConnection = /** @class */ (function (_super) {
         if (this.initializing === undefined) {
             console.log("Doing initialize");
             this.initializing = new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
-                var _this = this;
+                var e_1;
                 return __generator(this, function (_a) {
-                    this.server.group.manager.api.fetch('POST', "servers/" + this.server.info.id + "/console", {})
-                        .then(function (details) { return __awaiter(_this, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    console.log("Received details");
-                                    console.log(details);
-                                    if (!details.allowed) return [3 /*break*/, 2];
-                                    logger.success("Connecting to " + this.server.info.name);
-                                    return [4 /*yield*/, this.connection.connect(details.connection.address, details.connection.websocket_port, details.token)];
-                                case 1:
-                                    _a.sent();
-                                    this.isAllowed = true;
-                                    this.initializing = undefined;
-                                    resolve();
-                                    return [3 /*break*/, 3];
-                                case 2:
-                                    this.isAllowed = false;
-                                    this.initializing = undefined;
-                                    reject();
-                                    _a.label = 3;
-                                case 3: return [2 /*return*/];
+                    switch (_a.label) {
+                        case 0:
+                            logger.success("Connecting to " + this.server.info.name);
+                            _a.label = 1;
+                        case 1:
+                            _a.trys.push([1, 3, , 4]);
+                            return [4 /*yield*/, this.connection.open()];
+                        case 2:
+                            _a.sent();
+                            return [3 /*break*/, 4];
+                        case 3:
+                            e_1 = _a.sent();
+                            console.error("Couldn't connect. Is it offline?");
+                            console.error(e_1);
+                            this.connection.terminate();
+                            //If an api rejection error (otherwise could just be server down)
+                            if (!!e_1.details && !e_1.details.allowed) {
+                                this.isAllowed = false;
                             }
-                        });
-                    }); })
-                        .catch(function (e) {
-                        console.log(e);
-                        if (e.code != 403) {
-                            logger.error("Unexpected error connecting to server");
-                            logger.info(e);
-                        }
-                        _this.initializing = undefined;
-                        reject();
-                    });
-                    return [2 /*return*/];
+                            this.initializing = undefined;
+                            reject();
+                            return [3 /*break*/, 4];
+                        case 4:
+                            this.isAllowed = true;
+                            this.initializing = undefined;
+                            resolve();
+                            return [2 /*return*/];
+                    }
                 });
             }); });
         }

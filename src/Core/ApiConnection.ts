@@ -165,6 +165,8 @@ export default class ApiConnection extends TypedEmitter<Events>
     private handleException(e:any)
     {
         logger.fatal("Error getting access token");
+        
+        logger.error(e.data);
 
         if (!!e.data && !!e.data.payload && e.data.isResponseError)
         {

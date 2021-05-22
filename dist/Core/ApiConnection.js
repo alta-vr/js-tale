@@ -192,6 +192,7 @@ var ApiConnection = /** @class */ (function (_super) {
     };
     ApiConnection.prototype.handleException = function (e) {
         logger.fatal("Error getting access token");
+        logger.error(e.data);
         if (!!e.data && !!e.data.payload && e.data.isResponseError) {
             throw new Error(e.data.payload.error_description);
         }

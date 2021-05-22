@@ -3,7 +3,9 @@ import { TypedEmitter } from 'tiny-typed-emitter';
 import Logger from '../logger';
 import { EventEmitter } from 'events';
 import Server from './Server';
-import { HttpError } from '../Core/ApiConnection';
+import ApiConnection, { HttpError } from '../Core/ApiConnection';
+
+import { JsapiAccessProvider } from 'att-websockets/dist/connection';
 
 
 interface ConsoleEvents
@@ -15,10 +17,27 @@ interface ConsoleEvents
 
 const logger = new Logger('ServerConnection');
 
+class ApiCaller 
+{
+    api:ApiConnection;
+
+    constructor(api:ApiConnection)
+    {
+        this.api = api;
+    }
+
+    joinConsole(id:number, start:boolean) : Promise<any>
+    {
+        return this.api.fetch('POST', `servers/${id}/console`, {});
+    }
+}
+
 export default class ServerConnection extends TypedEmitter<ConsoleEvents>
 {
     server:Server;
     
+    private accessProvider:JsapiAccessProvider;
+
     private connection:Connection;
 
     private internalEmitter:EventEmitter = new EventEmitter();
@@ -27,15 +46,20 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
 
     isAllowed?:boolean;
 
+    apiCaller:ApiCaller;
+
     constructor (server: Server)
     {
         super();
 
         console.log("Creating server connection");
 
-        this.server = server;
-        this.connection = new Connection(this.server.info.name);
+        this.server = server;        
+        this.accessProvider = new JsapiAccessProvider(this.server.info.id, new ApiCaller(server.group.manager.api));
+        this.connection = new Connection(this.accessProvider, this.server.info.name);
         
+        this.apiCaller = new ApiCaller(server.group.manager.api);
+
         this.connection.onMessage = this.handleMessage.bind(this);
         this.connection.onError = this.handleError.bind(this);
         this.connection.onClose = this.handleClose.bind(this);
@@ -59,42 +83,32 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
 
             this.initializing = new Promise(async (resolve, reject) =>
             {
-                this.server.group.manager.api.fetch('POST', `servers/${this.server.info.id}/console`, {})
-                .then(async details =>  
-                {      
-                    console.log("Received details");
-                    console.log(details);
-
-                    if (details.allowed)
-                    {
-                        logger.success(`Connecting to ${this.server.info.name}`);
-                    
-                        await this.connection.connect(details.connection.address, details.connection.websocket_port, details.token);
+                logger.success(`Connecting to ${this.server.info.name}`);
             
-                        this.isAllowed = true;
-                        this.initializing = undefined;
-                        resolve();
-                    }
-                    else
+                try
+                {
+                    await this.connection.open();
+                }
+                catch (e)
+                {            
+                    console.error("Couldn't connect. Is it offline?");
+                    console.error(e);
+
+                    this.connection.terminate();
+
+                    //If an api rejection error (otherwise could just be server down)
+                    if (!!e.details && !e.details.allowed)
                     {
                         this.isAllowed = false;
-                        this.initializing = undefined;
-                        reject();
                     }
-                })
-                .catch((e:HttpError) =>
-                {
-                    console.log(e);
 
-                    if (e.code != 403)
-                    {
-                        logger.error("Unexpected error connecting to server");
-                        logger.info(e);
-                    }
-                    
                     this.initializing = undefined;
                     reject();
-                });
+                }
+
+                this.isAllowed = true;
+                this.initializing = undefined;
+                resolve();
             });
         }
 
