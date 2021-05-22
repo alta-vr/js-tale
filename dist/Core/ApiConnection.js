@@ -325,8 +325,6 @@ var ApiConnection = /** @class */ (function (_super) {
                     case 0: return [4 /*yield*/, this.checkRefresh()];
                     case 1:
                         _a.sent();
-                        logger.info("HEADERS");
-                        logger.info(this.headers);
                         return [4 /*yield*/, fetchInternal(this.endpoint + path, {
                                 headers: this.headers,
                                 method: method,

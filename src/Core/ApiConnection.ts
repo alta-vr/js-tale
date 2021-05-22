@@ -309,9 +309,6 @@ export default class ApiConnection extends TypedEmitter<Events>
     {
         await this.checkRefresh();
 
-        logger.info("HEADERS");
-        logger.info(this.headers);
-
         return await fetchInternal(this.endpoint + path, {
             headers: this.headers,
             method,
