@@ -52,7 +52,7 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
     {
         super();
 
-        console.log("Creating server connection");
+        logger.info("Creating server connection");
 
         this.server = server;        
         this.accessProvider = new JsapiAccessProvider(this.server.info.id, new ApiCaller(server.group.manager.api));
@@ -79,7 +79,7 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
     {
         if (this.initializing === undefined)
         {
-            console.log("Doing initialize");
+            logger.info("Doing initialize");
 
             this.initializing = new Promise(async (resolve, reject) =>
             {
