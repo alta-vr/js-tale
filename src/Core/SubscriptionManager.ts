@@ -16,14 +16,18 @@ export default class SubscriptionManager
         this.api = api;
         this.emitter = new EventEmitter();
     }
+
     async init()
     {
+        const headers = await this.api.getHeaders();
+
         return new Promise<void>((resolve, reject) =>
         {
-            this.ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev", { headers: this.api.headers });
-            
+            this.ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev", { headers });
+
             this.ws.on('open', () =>
             {
+                logger.success('Websocket opened.');
                 resolve();
             });
             

@@ -202,13 +202,20 @@ export default class ApiConnection extends TypedEmitter<Events>
         this.setupHttpsClient();
     }
 
+    async getHeaders()
+    {
+        await this.checkRefresh();
+
+        return this.headers;
+    }
+
     private async setupHttpsClient()
     {
         logger.info("Setting up https client");
 
         if (this.accessToken != undefined)
         {
-            logger.info("Deconding token");
+            logger.info("Decoding token");
 
             this.decodedToken = this.decodedToken || {};
 
@@ -253,7 +260,7 @@ export default class ApiConnection extends TypedEmitter<Events>
             return;
         }
     
-        if (!this.refresh && this.accessToken.expired())
+        if (!this.refresh && this.accessToken.expired(15))
         {
             this.refresh = this.refreshInternal();
         }
