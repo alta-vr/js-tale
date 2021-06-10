@@ -51,7 +51,7 @@ export default class SubscriptionManager
 
                 logger.success('Websocket opened.');
 
-                (ws as any).pingInterval = setInterval(() => ws?.ping(), 5 * 60 * 1000);
+                (ws as any).pingInterval = setInterval(() => { console.log("ping"); ws?.ping(); }, 5 * 60 * 1000);
                 (ws as any).migrateTimeout = setTimeout(() => this.migrate(), 110 * 60 * 1000);
 
                 resolve(ws);
@@ -108,37 +108,44 @@ export default class SubscriptionManager
 
     private async migrate()
     {
-        logger.info("Migrating websocket: Getting migration token");
+        try
+        {
+            logger.info("Migrating websocket: Getting migration token");
 
-        var { content } = await this.send('GET', `migrate`);
+            var migrateResult = await this.send('GET', `migrate`);            
+            var { token } = JSON.parse(migrateResult.content);
 
-        var token = JSON.parse(content);
+            var oldWs = this.ws;
 
-        var oldWs = this.ws;
+            logger.info("Migrating websocket: Creating a new websocket");
+            
+            this.ws = await this.createWebsocket();
 
-        logger.info("Migrating websocket: Creating a new websocket");
-        
-        this.ws = await this.createWebsocket();
+            logger.info("Migrating websocket: Pausing outgoing and sending migration token");
 
-        logger.info("Migrating websocket: Pausing outgoing and sending migration token");
+            //This tells the server to update all subscriptions in the database to this new connection
+            this.migrating = this.send('POST', 'migrate', { token });
 
-        //This tells the server to update all subscriptions in the database to this new connection
-        this.migrating = this.send('POST', 'migrate', token);
+            await this.migrating;
+            
+            this.migrating = undefined;
 
-        await this.migrating;
-        
-        this.migrating = undefined;
+            logger.info("Migrating websocket: Finished - Resumed outgoing and waiting for 10s before destroying old connection");
 
-        logger.info("Migrating websocket: Finished - Resumed outgoing and waiting for 10s before destroying old connection");
+            //Ensure that any messages in transit are received
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            
+            logger.info("Migrating websocket: Old connection deleting");
 
-        //Ensure that any messages in transit are received
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        
-        logger.info("Migrating websocket: Old connection deleting");
-
-        oldWs?.close();
-        
-        logger.info("Migrating websocket: Old connection deleted");
+            oldWs?.close(1000);
+            
+            logger.info("Migrating websocket: Old connection deleted");
+        }
+        catch (e)
+        {
+            console.error("Error migrating");
+            console.error(e);
+        }
     }
 
     subscribe(event: string, sub: any, callback: (data: any) => void)
@@ -165,14 +172,14 @@ export default class SubscriptionManager
         return await this.send('DELETE', `subscription/${event}/${sub}`);
     }
 
-    async send(method:string, path:string, body?:any) : Promise<any>
+    async send(method:string, path:string, content?:any) : Promise<any>
     {
         if (!this.ws)
         {
             throw new Error("Subscription manager must have init called first");
         }
         
-        if (!!this.migrating)
+        if (!!this.migrating && path != 'migrate')
         {
             //Best to hold off from anything until migration has finished
             await this.migrating;
@@ -183,15 +190,19 @@ export default class SubscriptionManager
         this.nextId++;
         let id = this.nextId;
 
-        this.ws?.send(JSON.stringify({
-            id: id,
-            method,
-            path,
-            body,
-            authorization: headers["Authorization"]
-        }));
+        return await new Promise((resolve, reject) => 
+        {
+            this.ws?.send(JSON.stringify({
+                id: id,
+                method,
+                path,
+                content: !!content ? JSON.stringify(content) : undefined,
+                authorization: headers["Authorization"]
+            }), 
+            error => !!error && reject(error));
 
-        return await new Promise((resolve, reject) => this.emitter.once(`request-${this.nextId}`, data => { data.responseCode == 200 ? resolve(data) : reject(data); }));
+            this.emitter.once(`request-${this.nextId}`, data => { !!data && data.responseCode == 200 ? resolve(data) : reject(data); })
+        });
     }
 
     close()
@@ -223,7 +234,15 @@ export default class SubscriptionManager
             }
             else
             {
-                this.emitter.emit('message', data);
+                if (this.emitter.listenerCount('message') > 0)
+                {
+                    this.emitter.emit('message', data);
+                }
+                else
+                {
+                    logger.info("Unhandled message:");
+                    logger.info(data);
+                }
             }
         }
     }

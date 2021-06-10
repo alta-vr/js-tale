@@ -49,7 +49,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
         
         this.invites = new LiveList("invites", () => this.api.fetch('GET', 'groups/invites'), undefined, callback => this.subscriptions.subscribe('me-group-invite-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-invite-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupInvite(this, data));
         this.requests = new LiveList("requests", () => this.api.fetch('GET', 'groups/requests'), undefined, callback => this.subscriptions.subscribe('me-group-request-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-request-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupRequest(this, data));
-    }
+    }   
 
     async acceptAllInvites(subscribe: boolean)
     {

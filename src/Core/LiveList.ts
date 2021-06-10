@@ -61,31 +61,35 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
         {
             return this.items;
         }
-
+        
         if (subscribe)
         {
+            var promises = [];
+
             this.isLive = true;
 
-            this.subscribeToCreate(this.receiveCreate.bind(this)).then(() => logger.log(`Subscribed to ${this.name} create`)).catch(error =>
+            promises.push(this.subscribeToCreate(this.receiveCreate.bind(this)).then(() => logger.log(`Subscribed to ${this.name} create`)).catch(error =>
             {
                 if (error.responseCode == 404)
                     this.block();
-            });
+            }));
             
-            this.subscribeToDelete(this.receiveDelete.bind(this)).then(() => logger.log(`Subscribed to ${this.name} delete`)).catch(error =>
+            promises.push(this.subscribeToDelete(this.receiveDelete.bind(this)).then(() => logger.log(`Subscribed to ${this.name} delete`)).catch(error =>
             {
                 if (error.responseCode == 404)
                     this.block();
-            });
+            }));
 
             if (!!this.subscribeToUpdate)
             {
-                this.subscribeToUpdate(this.receiveUpdate.bind(this)).then(() => logger.log(`Subscribed to ${this.name} update`)).catch(error =>
+                promises.push(this.subscribeToUpdate(this.receiveUpdate.bind(this)).then(() => logger.log(`Subscribed to ${this.name} update`)).catch(error =>
                 {
                     if (error.responseCode == 404)
                         this.block();
-                });
+                }));
             }
+
+            await Promise.all(promises);
         }
         
         try
