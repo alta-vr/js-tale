@@ -31,7 +31,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
         this.api = subscriptions.api;
         this.subscriptions = subscriptions;
         this.groups = new LiveList("groups", 
-            () => this.api.fetch('GET', 'groups/joined'), 
+            () => this.api.fetch('GET', 'groups/joined?limit=1000'), 
             id => this.api.fetch('GET', `groups/${id}`),
             callback => this.subscriptions.subscribe('me-group-create', this.api.userId, callback), 
             callback => this.subscriptions.subscribe('me-group-delete', this.api.userId, callback), 
@@ -47,8 +47,8 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             this.emit('delete', group);
         });
         
-        this.invites = new LiveList("invites", () => this.api.fetch('GET', 'groups/invites'), undefined, callback => this.subscriptions.subscribe('me-group-invite-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-invite-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupInvite(this, data));
-        this.requests = new LiveList("requests", () => this.api.fetch('GET', 'groups/requests'), undefined, callback => this.subscriptions.subscribe('me-group-request-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-request-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupRequest(this, data));
+        this.invites = new LiveList("invites", () => this.api.fetch('GET', 'groups/invites?limit=1000'), undefined, callback => this.subscriptions.subscribe('me-group-invite-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-invite-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupInvite(this, data));
+        this.requests = new LiveList("requests", () => this.api.fetch('GET', 'groups/requests?limit=1000'), undefined, callback => this.subscriptions.subscribe('me-group-request-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-request-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupRequest(this, data));
     }   
 
     async acceptAllInvites(subscribe: boolean)

@@ -186,7 +186,7 @@ export default class Group extends EventEmitter<GroupEvents>
         var updateSub = `group-${name}-update`;
         
         var list: GroupMemberList<T> = new GroupMemberList(`${this.info.name} ${name}`, 
-            () => this.manager.api.fetch('GET', `groups/${id}/${route}`), 
+            () => this.manager.api.fetch('GET', `groups/${id}/${route}?limit=1000`), 
             hasSingle ? user => this.manager.api.fetch('GET', `groups/${id}/${route}/${user}`) : undefined,
             callback => this.manager.subscriptions.subscribe(createSub, id, callback), 
             callback => this.manager.subscriptions.subscribe(deleteSub, id, callback), 
