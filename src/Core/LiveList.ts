@@ -29,6 +29,8 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     private getRawId: (data: any) => number;
     private getId: (a: T) => number;
     private process: (data: any) => T;
+
+    private currentRefresh: Promise<T[]>|undefined;
     
     constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined|((id:number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), getRawId: (data: any) => number, getId: (item: T) => number, process: (data: any) => T)
     {
@@ -57,11 +59,25 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
 
     async refresh(subscribe: boolean = false): Promise<T[]>
     {
+        if (!this.currentRefresh)
+        {
+            this.currentRefresh = this.refreshInternal(subscribe);
+        }
+
+        var result = await this.currentRefresh;
+
+        this.currentRefresh = undefined;
+
+        return result;
+    }
+
+    private async refreshInternal(subscribe: boolean = false): Promise<T[]>
+    {
         if (this.isLive || this.isBlocked)
         {
             return this.items;
         }
-        
+
         if (subscribe)
         {
             var promises = [];
