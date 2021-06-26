@@ -78,7 +78,7 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
             if (this.isExpandable)
             {
                 //Don't add to the list, as it may not belong there
-                return item;
+                return this.process(item);
             }
 
             this.receiveCreate({content:item});

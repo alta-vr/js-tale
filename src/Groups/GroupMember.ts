@@ -8,6 +8,8 @@ export default class GroupMember
     icon: number;
     role: number;
     created: Date;
+    type: string;
+    bot:boolean;
 
     constructor(group: Group, data: any)
     {
@@ -17,5 +19,7 @@ export default class GroupMember
         this.icon = data.icon;
         this.role = data.role_id;
         this.created = data.created_at;
+        this.type = data.type;
+        this.bot = data.bot;
     }
 }

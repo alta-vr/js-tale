@@ -137,11 +137,12 @@ export class GroupServerList extends LiveList<Server>
 
 const logger = new Logger('Group');
 
+
 export default class Group extends EventEmitter<GroupEvents>
 {
     manager: GroupManager;
     info: GroupInfo;
-    member: any;
+    member: GroupMember|undefined;
     invites: GroupMemberList<GroupMemberInvite>;
     members: GroupMemberList<GroupMember>;
     bans: GroupMemberList<GroupMemberBan>;
@@ -150,15 +151,19 @@ export default class Group extends EventEmitter<GroupEvents>
 
     private isConsoleAutomatic:boolean = false;
 
-    constructor(manager: GroupManager, info: GroupInfo, member: any | undefined = undefined)
+    constructor(manager: GroupManager, info: GroupInfo, member: any = undefined)
     {
         super();
        
         this.manager = manager;
         this.info = info;
-        this.member = member;
         var id = this.info.id;
        
+        if (!!member)
+        {
+            this.member = new GroupMember(this, member);
+        }
+
         logger.log(`Joined ${id} - ${this.info.name}`);
        
         //Must be done internally, as there is no me-group-update
