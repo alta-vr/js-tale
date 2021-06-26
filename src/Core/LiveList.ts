@@ -31,8 +31,20 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     private process: (data: any) => T;
 
     private currentRefresh: Promise<T[]>|undefined;
+
+    //Expandable lists mean that 'get' requests supports items outside of the 'list'
+    //A key example of this is the 'groups' list, which allows you to get groups that aren't in the list (eg. open/public)
+    private isExpandable: boolean = false;
     
-    constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined|((id:number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), getRawId: (data: any) => number, getId: (item: T) => number, process: (data: any) => T)
+    constructor(name: string, 
+        getAll: () => Promise<any[]>, 
+        getSingle: undefined|((id:number) => Promise<any>), 
+        subscribeToCreate: (callback: (data: any) => void) => Promise<any>, 
+        subscribeToDelete: (callback: (data: any) => void) => Promise<any>, 
+        subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), 
+        getRawId: (data: any) => number, 
+        getId: (item: T) => number, 
+        process: (data: any) => T)
     {
         super();
         this.name = name;
@@ -45,11 +57,29 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
         this.process = process;
     }
 
+    markExpandable()
+    {
+        this.isExpandable = true;
+    }
+
     async get(id:number) : Promise<T>
     {
-        if (!this.isLive && !this.map[id] && !!this.getSingle)
+        if (!!this.currentRefresh)
+        {
+            await this.currentRefresh;
+        }
+
+        var couldBeExternal = this.isExpandable || !this.isLive;
+
+        if (couldBeExternal && !this.map[id] && !!this.getSingle)
         {
             var item = await this.getSingle(id);
+
+            if (this.isExpandable)
+            {
+                //Don't add to the list, as it may not belong there
+                return item;
+            }
 
             this.receiveCreate({content:item});
         }

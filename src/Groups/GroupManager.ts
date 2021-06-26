@@ -39,6 +39,8 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             data => !!data.group ? data.group.id : data.id, 
             group => group.info.id, 
             data => !!data.group ? new Group(this, data.group, data.member) : new Group(this, data));
+
+        this.groups.markExpandable();
             
         this.groups.on('create', group => this.emit('create', group));
         this.groups.on('delete', group =>
