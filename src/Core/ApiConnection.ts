@@ -6,9 +6,10 @@ import Logger from '../logger';
 
 import SessionManager from './SessionManager';
 
-import { ClientCredentialsProvider, TokenProvider } from './auth/TokenProvider';
+import { TokenProvider } from './auth/TokenProvider';
 
 import { fetch } from './utility';
+import { ClientCredentialsProvider } from './auth/ClientCredentialsProvider';
 
 export type HttpMethod = 'POST' | 'DELETE' | 'GET' | 'PUT' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 

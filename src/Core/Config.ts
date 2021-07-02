@@ -1,4 +1,5 @@
-import { ClientCredentials, AuthorizationCode } from './auth/TokenProvider';
+import { AuthorizationCode } from "./auth/AuthorizationCodeProvider";
+import { ClientCredentials } from "./auth/ClientCredentialsProvider";
 
 type Config = ClientCredentials | AuthorizationCode;
 

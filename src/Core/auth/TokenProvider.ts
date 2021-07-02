@@ -4,8 +4,13 @@ import Config from "../Config";
 import { fetch } from "../utility";
 
 import querystring from 'querystring';
+import { ClientCredentialsProvider } from "./ClientCredentialsProvider";
+import { AuthorizationCodeProvider } from "./AuthorizationCodeProvider";
+import Logger from "../../logger";
 
-interface BaseConfig
+const logger = new Logger('TokenProvider');
+
+export interface BaseConfig
 {
     clientId: string;
 
@@ -15,25 +20,15 @@ interface BaseConfig
     scope:string|string[];
 }
 
-export interface ClientCredentials extends BaseConfig
-{
-    clientSecret: string,
-}
+export const LocalHost = "http://localhost:13490/api/";
+export const Cloud = "https://967phuchye.execute-api.ap-southeast-2.amazonaws.com/"
 
-export interface AuthorizationCode extends BaseConfig
-{
-    redirect_uri: string;
-}
-
-const LocalHost = "http://localhost:13490/api/";
-const Cloud = "https://967phuchye.execute-api.ap-southeast-2.amazonaws.com/"
-
-const TokenHost = "https://accounts.townshiptale.com";
-const Endpoint = "prod";
-const TokenPath = "/connect/token";
-const AuthorizePath = "/connect/authorize";
-const UserInfoPath = '/connect/userinfo';
-const RevokePath = '/connect/revoke';
+export const TokenHost = "https://accounts.townshiptale.com";
+export const Endpoint = "prod";
+export const TokenPath = "/connect/token";
+export const AuthorizePath = "/connect/authorize";
+export const UserInfoPath = '/connect/userinfo';
+export const RevokePath = '/connect/revoke';
 
 const ExpirationBufferMs = 15000;
 
@@ -113,7 +108,7 @@ export abstract class TokenProvider
 {
     token?:Token;
 
-    handleToken:()=>Promise<void>;
+    private handleToken:()=>Promise<void>;
     
     private currentRefresh:Promise<void>|undefined;
 
@@ -128,10 +123,12 @@ export abstract class TokenProvider
         {
             return new ClientCredentialsProvider(config, handleToken);
         }
-        else
+        else if ('redirectUri' in config)
         {
             return new AuthorizationCodeProvider(config, handleToken);
         }
+
+        throw new Error("A client secret must be provided for bots, or a redirectUri for websites");
     }
 
     protected abstract getConfig() : BaseConfig;
@@ -194,7 +191,22 @@ export abstract class TokenProvider
     
         if (!this.currentRefresh && this.token.expiry - (Date.now() + ExpirationBufferMs) <= 0)
         {
-            this.currentRefresh = this.refresh();
+            this.currentRefresh = this.refresh()
+            .then(() => 
+            {
+                if (!!this.token && this.token.expiry - (Date.now() + ExpirationBufferMs) <= 0)
+                {
+                    logger.error("Could not refresh token");
+                    return this.logout();
+                }
+            })
+            .catch(e =>
+            {
+                logger.error("Error refreshing token");
+                logger.error(e);
+
+                return this.logout();
+            });
         }
         
         if (!!this.currentRefresh)
@@ -205,10 +217,13 @@ export abstract class TokenProvider
         }
     }
 
-    protected async refresh() {}
+    protected async refresh() 
+    {
+
+    }
 }
 
-class TypedTokenProvider<T extends BaseConfig> extends TokenProvider
+export class TypedTokenProvider<T extends BaseConfig> extends TokenProvider
 {
     config:T;
 
@@ -230,58 +245,5 @@ class TypedTokenProvider<T extends BaseConfig> extends TokenProvider
     getConfig()
     {
         return this.config;
-    }
-}
-
-export class ClientCredentialsProvider extends TypedTokenProvider<ClientCredentials>
-{
-    constructor(config:ClientCredentials, handleToken:()=>Promise<void>)
-    {
-        super(config, handleToken);
-    }
-
-    protected async refresh()
-    {
-        await this.getToken();
-    }
-
-    async getToken()
-    {
-        var headers = {
-            'Authorization' : `Basic ${this.encodeClient()}`,
-            'Content-Type' : 'application/x-www-form-urlencoded'
-        }
-
-        var parameters = {
-            grant_type: 'client_credentials',
-            scope: this.config.scope,
-        }
-        
-        var response = await fetch(`${TokenHost}${TokenPath}`, {
-            method: 'POST',
-            headers,
-            body : querystring.stringify(parameters)
-        });
-
-        var value = await response.json();
-
-        await this.setToken(value);
-    }
-
-    private encodeClient()
-    {
-        var id = encodeURIComponent(this.config.clientId).replace(/%20/g, '+');
-        var secret = encodeURIComponent(this.config.clientSecret).replace(/%20/g, '+');
-
-        return Buffer.from(`${id}:${secret}`).toString('base64');
-    }
-} 
-
-export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationCode>
-{
-    constructor(config:AuthorizationCode, handleToken:()=>Promise<void>)
-    {
-        super(config, handleToken);
-
     }
 }

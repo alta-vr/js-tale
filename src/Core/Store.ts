@@ -2,30 +2,30 @@ import { ApiConnection } from "..";
 
 export default class Store
 {
-    api:ApiConnection;
+    clientId:string;
     store: Storage;
 
-    constructor(api:ApiConnection, store:Storage)
+    constructor(clientId:string, store:Storage)
     {
-        this.api = api;
+        this.clientId = clientId;
         this.store = store;
     }
 
     get(key:string)
     {
-        return this.store.getItem(`js-tale:${this.api.config.clientId}:${key}`);
+        return this.store.getItem(`js-tale:${this.clientId}:${key}`);
     }
 
     set(key:string, value:string)
     {
-        return this.store.setItem(`js-tale:${this.api.config.clientId}:${key}`, value);
+        return this.store.setItem(`js-tale:${this.clientId}:${key}`, value);
     }
 
     clear()
     {
         var keys = [];
 
-        var prefix = `js-tale:${this.api.config.clientId}`;
+        var prefix = `js-tale:${this.clientId}`;
 
         for (let index = 0; index < this.store.length; index++) 
         {
