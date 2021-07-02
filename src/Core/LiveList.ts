@@ -2,6 +2,7 @@ import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
 
 import chalk from 'chalk';
 import Logger from '../logger';
+import { ApiConnection, SubscriptionManager } from '..';
 
 const logger = new Logger('LiveList');
 
@@ -12,6 +13,19 @@ interface LiveListEvents<T>
     'update': (item : T, old : T) => void;
 }
 
+export interface LiveListDefinition<T>
+{
+    name: string;
+    getAll: string|(() => Promise<any[]>);
+    getSingle?: string|((id:number) => Promise<any>);
+    subscribeToCreate?: string;
+    subscribeToUpdate?: string;
+    subscribeToDelete?: string;
+    getRawId: (data: any) => number;
+    getId: (item: T) => number;
+    process: (data: any) => T;
+}
+
 export default class LiveList<T> extends EventEmitter<LiveListEvents<T>> 
 {
     name: string;
@@ -20,6 +34,9 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     isBlocked: boolean = false;
 
     protected map:{[index:number]:T} = {};
+
+    private api: ApiConnection;
+    private subscriptionManager: SubscriptionManager;
 
     private getAll: () => Promise<any[]>;
     protected getSingle: undefined|((id:number) => Promise<any>);
@@ -36,25 +53,36 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     //A key example of this is the 'groups' list, which allows you to get groups that aren't in the list (eg. open/public)
     private isExpandable: boolean = false;
     
-    constructor(name: string, 
-        getAll: () => Promise<any[]>, 
-        getSingle: undefined|((id:number) => Promise<any>), 
-        subscribeToCreate: (callback: (data: any) => void) => Promise<any>, 
-        subscribeToDelete: (callback: (data: any) => void) => Promise<any>, 
-        subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), 
-        getRawId: (data: any) => number, 
-        getId: (item: T) => number, 
-        process: (data: any) => T)
+    constructor(subscriptionManager:SubscriptionManager, definition:LiveListDefinition<T>, getSub:()=>any)
     {
         super();
-        this.name = name;
-        this.getAll = getAll;
-        this.getSingle = getSingle;
-        this.subscribeToCreate = subscribeToCreate;
-        this.subscribeToDelete = subscribeToDelete;
-        this.getRawId = getRawId;
-        this.getId = getId;
-        this.process = process;
+
+        this.api = subscriptionManager.api;
+        this.subscriptionManager = subscriptionManager;
+
+        this.name = definition.name;
+        this.getAll = typeof definition.getAll === 'string' ? () => this.api.fetch('GET', definition.getAll as string) : definition.getAll;
+        
+        if (!!definition.getSingle)
+        {
+            this.getSingle = typeof definition.getSingle === 'string' ? id => this.api.fetch('GET', `${definition.getSingle}/${id}`) : definition.getSingle;
+        }
+
+        function createSubscribe(name?:string)
+        {
+            return !name ? undefined : (callback:(data:any)=>void) => subscriptionManager.subscribe(name, getSub(), callback);
+        }
+
+        this.subscribeToCreate = createSubscribe(definition.subscribeToCreate)!;
+        this.subscribeToDelete = createSubscribe(definition.subscribeToDelete)!;
+        this.subscribeToUpdate = createSubscribe(definition.subscribeToUpdate);
+
+        this.getRawId = definition.getRawId;
+        this.getId = definition.getId;
+        this.process = definition.process;
+        
+        this.api.sessionManager.on('logged-in', this.handleLoggedIn.bind(this));
+        this.api.sessionManager.on('logged-out', this.clear.bind(this));
     }
 
     markExpandable()
@@ -62,11 +90,38 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
         this.isExpandable = true;
     }
 
+    private currentUser()
+    {
+        return this.api.sessionManager.userInfo?.userId;
+    }
+
+    private ensureSameUser(userId:number|undefined)
+    {
+        if (userId != this.currentUser())
+        {
+            throw new Error("logged out");
+        }
+    }
+    
+    private handleLoggedIn()
+    {
+        if (this.isLive)
+        {
+            this.isLive = false;
+            this.isBlocked = false;
+            this.refreshInternal();
+        }
+    }
+
     async get(id:number) : Promise<T>
     {
+        var cacheId = this.currentUser();
+
         if (!!this.currentRefresh)
         {
             await this.currentRefresh;
+            
+            this.ensureSameUser(cacheId);
         }
 
         var couldBeExternal = this.isExpandable || !this.isLive;
@@ -74,6 +129,8 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
         if (couldBeExternal && !this.map[id] && !!this.getSingle)
         {
             var item = await this.getSingle(id);
+
+            this.ensureSameUser(cacheId);
 
             if (this.isExpandable)
             {
@@ -108,6 +165,8 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
             return this.items;
         }
 
+        var cacheId = this.currentUser();
+
         if (subscribe)
         {
             var promises = [];
@@ -119,6 +178,7 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
                 if (error.responseCode == 404)
                     this.block();
             }));
+            
             
             promises.push(this.subscribeToDelete(this.receiveDelete.bind(this)).then(() => logger.log(`Subscribed to ${this.name} delete`)).catch(error =>
             {
@@ -136,11 +196,15 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
             }
 
             await Promise.all(promises);
+
+            this.ensureSameUser(cacheId);
         }
         
         try
         {
             var results = await this.getAll();
+
+            this.ensureSameUser(cacheId);
 
             if (results === undefined)
             {
@@ -243,6 +307,20 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
             Object.assign(this.items[index], this.process(event.content));
 
             this.emit('update', this.items[index], cache);
+        }
+    }
+
+    clear()
+    {
+        var cache = this.items;
+
+        this.items = [];
+        this.isBlocked = false;
+        this.currentRefresh = undefined;
+
+        for (var item of cache)
+        {
+            this.emit('delete', item);
         }
     }
 }

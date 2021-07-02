@@ -21,37 +21,27 @@ export default class Profile
 
     getLoggedIn()
     {
-        return this.api.decodedToken !== undefined;
+        return !!this.api.tokenProvider.token;
     }
 
     getId()
     {
-        return this.api.decodedToken.sub;
+        return this.api.sessionManager.userInfo?.userId;
     }
 
     getUsername()
     {
-        return this.api.decodedToken.username;
+        return this.api.sessionManager.userInfo?.username;
     }
 
-    getVerified()
+    getVerified() : boolean
     {
-        return this.api.decodedToken.is_verified;
+        return this.api.tokenProvider.token?.decoded.is_verified || false;
     }
 
     getSupporter()
     {
         //TODO: Add supporter to profile
         return undefined;
-    }
-    
-    requestVerificationEmail(email:string)
-    {
-        if (!this.getVerified())
-        {
-            logger.info("Requesting verification");
-    
-            return this.api.fetch("PUT", `users/${this.getId()}/verification`, { email });
-        }
     }
 }

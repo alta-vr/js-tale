@@ -1,7 +1,7 @@
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
 import GroupInfo from './GroupInfo';
 import GroupManager from './GroupManager';
-import LiveList from '../Core/LiveList';
+import LiveList, { LiveListDefinition } from '../Core/LiveList';
 import GroupMember from './GroupMember';
 import GroupMemberRequest from './GroupMemberRequest';
 import GroupMemberInvite from './GroupMemberInvite';
@@ -9,6 +9,7 @@ import GroupMemberBan from './GroupMemberBan';
 import Server, { ServerInfo } from './Server';
 import ServerConnection from "./ServerConnection";
 import Logger from '../logger';
+import { ApiConnection, SubscriptionManager } from '..';
 
 
 interface GroupEvents
@@ -28,9 +29,9 @@ interface GroupEvents
 
 export class GroupMemberList<T extends GroupMember> extends LiveList<T>
 {
-    constructor(name: string, getAll: () => Promise<any[]>, getSingle: undefined|((id:number) => Promise<any>), subscribeToCreate: (callback: (data: any) => void) => Promise<any>, subscribeToDelete: (callback: (data: any) => void) => Promise<any>, subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>), process: (data: any) => T)
+    constructor(subscriptionManager: SubscriptionManager, definition: LiveListDefinition<T>, groupId: number)
     {
-        super(name, getAll, getSingle, subscribeToCreate, subscribeToDelete, subscribeToUpdate, data => data.user_id, item => item.userId, process);
+        super(subscriptionManager, definition, () => groupId);
     }
 
     async find(item:number|string) : Promise<T|undefined>
@@ -58,30 +59,32 @@ export class GroupServerList extends LiveList<Server>
     manager: GroupManager;
     isStatusLive: boolean = false;
 
-    constructor(group:Group)
+    constructor(subscriptionManager:SubscriptionManager, group:Group)
     {
-        super(`${group.info.name} servers`,
-        () => new Promise((resolve, reject) => 
-        {
-            if (!!group.info.servers)
+        super(subscriptionManager, {
+            name: `${group.info.name} servers`,
+            getAll: () => new Promise((resolve, reject) => 
             {
-                resolve(group.info.servers);
-            }
-            else if (!!this.getSingle)
-            {
-                this.getSingle(group.info.id)
-                .then(info => resolve(info.servers))
-                .catch(reject);
-            }
-        }),
-        undefined,
-        callback => group.manager.subscriptions.subscribe('group-server-create', group.info.id, callback),
-        callback => group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback),
-        callback => group.manager.subscriptions.subscribe('group-server-update', group.info.id, callback),
-        data => data.id,
-        server => server.info.id,
-        data => new Server(group, data));
-
+                if (!!group.info.servers)
+                {
+                    resolve(group.info.servers);
+                }
+                else if (!!this.getSingle)
+                {
+                    this.getSingle(group.info.id)
+                    .then(info => resolve(info.servers))
+                    .catch(reject);
+                }
+            }),
+            subscribeToCreate: 'group-server-create',
+            subscribeToUpdate: 'group-server-update',
+            subscribeToDelete: 'group-server-delete',
+            getRawId: data => data.id,
+            getId: server => server.info.id,
+            process: data => new Server(group, data)
+        }, 
+        () => group.info.id);
+        
         this.group = group;
         this.manager = group.manager;
     }
@@ -174,7 +177,7 @@ export default class Group extends EventEmitter<GroupEvents>
         this.requests = this.createList('requests', 'request', false, false,  data => new GroupMemberRequest(this, data));
         this.bans = this.createList('bans', 'ban', false, false, data => new GroupMemberBan(this, data));
         
-        this.servers = new GroupServerList(this);
+        this.servers = new GroupServerList(this.manager.subscriptions, this);
         this.servers.refresh(true);
 
         this.servers.on('create', data => this.emit('server-create', data));
@@ -186,17 +189,22 @@ export default class Group extends EventEmitter<GroupEvents>
     {
         var id = this.info.id;
         
-        var createSub = `group-${name}-create`;
-        var deleteSub = `group-${name}-delete`;
-        var updateSub = `group-${name}-update`;
+        var subscribeToCreate = `group-${name}-create`;
+        var subscribeToDelete = `group-${name}-delete`;
+        var subscribeToUpdate = hasUpdate ? `group-${name}-update` : undefined;
         
-        var list: GroupMemberList<T> = new GroupMemberList(`${this.info.name} ${name}`, 
-            () => this.manager.api.fetch('GET', `groups/${id}/${route}?limit=1000`), 
-            hasSingle ? user => this.manager.api.fetch('GET', `groups/${id}/${route}/${user}`) : undefined,
-            callback => this.manager.subscriptions.subscribe(createSub, id, callback), 
-            callback => this.manager.subscriptions.subscribe(deleteSub, id, callback), 
-            hasUpdate ? callback => this.manager.subscriptions.subscribe(updateSub, id, callback) : undefined,
-            create);
+        var list: GroupMemberList<T> = new GroupMemberList(this.manager.subscriptions, {
+            name: `${this.info.name} ${name}`,
+            getAll: `groups/${id}/${route}?limit=1000`, 
+            getSingle: hasSingle ? `groups/${id}/${route}` : undefined,
+            subscribeToCreate,
+            subscribeToDelete,
+            subscribeToUpdate,
+            getRawId: data => data.user_id,
+            getId: item => item.userId,
+            process: create
+        },
+        id);
         
         var createEvent = `${name}-create` as keyof GroupEvents;
         var deleteEvent = `${name}-delete` as keyof GroupEvents;

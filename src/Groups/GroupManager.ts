@@ -30,15 +30,17 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
         super();
         this.api = subscriptions.api;
         this.subscriptions = subscriptions;
-        this.groups = new LiveList("groups", 
-            () => this.api.fetch('GET', 'groups/joined?limit=1000'), 
-            this.getGroup.bind(this),
-            callback => this.subscriptions.subscribe('me-group-create', this.api.userId, callback), 
-            callback => this.subscriptions.subscribe('me-group-delete', this.api.userId, callback), 
-            undefined,
-            data => !!data.group ? data.group.id : data.id, 
-            group => group.info.id, 
-            data => !!data.group ? new Group(this, data.group, data.member) : new Group(this, data));
+        this.groups = new LiveList(this.subscriptions, {
+            name: "groups",
+            getAll: 'groups/joined?limit=1000',
+            getSingle: this.getGroup.bind(this),
+            subscribeToCreate: 'me-group-create',
+            subscribeToDelete: 'me-group-delete',
+            getRawId : data => !!data.group ? data.group.id : data.id, 
+            getId: group => group.info.id, 
+            process: data => !!data.group ? new Group(this, data.group, data.member) : new Group(this, data)
+        },
+        () => this.api.sessionManager.userInfo!.userId);
 
         this.groups.markExpandable();
             
@@ -49,8 +51,27 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             this.emit('delete', group);
         });
         
-        this.invites = new LiveList("invites", () => this.api.fetch('GET', 'groups/invites?limit=1000'), undefined, callback => this.subscriptions.subscribe('me-group-invite-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-invite-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupInvite(this, data));
-        this.requests = new LiveList("requests", () => this.api.fetch('GET', 'groups/requests?limit=1000'), undefined, callback => this.subscriptions.subscribe('me-group-request-create', this.api.userId, callback), callback => this.subscriptions.subscribe('me-group-request-delete', this.api.userId, callback), undefined, data => data.id, invite => invite.info.id, data => new GroupRequest(this, data));
+        this.invites = new LiveList(this.subscriptions, {
+            name: "invites", 
+            getAll: 'groups/invites?limit=1000',
+            subscribeToCreate: 'me-group-invite-create',
+            subscribeToDelete: 'me-group-invite-delete',
+            getRawId: data => data.id,
+            getId: invite => invite.info.id,
+            process: data => new GroupInvite(this, data)
+        },
+        () => this.api.sessionManager.userInfo!.userId);
+
+        this.requests = new LiveList(this.subscriptions, {
+            name: "requests",
+            getAll: 'groups/requests?limit=1000',
+            subscribeToCreate: 'me-group-request-create', 
+            subscribeToDelete: 'me-group-request-delete',
+            getRawId: data => data.id, 
+            getId: invite => invite.info.id,
+            process: data => new GroupRequest(this, data)
+        },
+        () => this.api.sessionManager.userInfo!.userId);    
     }   
 
     private async getGroup(id:number)
@@ -58,10 +79,15 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
         var [group, member] = await Promise.all(
         [
             this.api.fetch('GET', `groups/${id}`),
-            this.api.fetch('GET', `groups/${id}/members/${this.api.userId}`)       
+            this.api.fetch('GET', `groups/${id}/members/${this.api.sessionManager.userInfo!.userId}`)       
         ]);
 
         return { group, member };
+    }
+
+    join(id:number)
+    {
+        return this.api.fetch('POST', `groups/${id}/requests`);
     }
 
     async acceptAllInvites(subscribe: boolean)

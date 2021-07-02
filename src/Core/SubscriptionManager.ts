@@ -1,4 +1,4 @@
-import Websocket from 'ws';
+import Websocket from 'isomorphic-ws';
 import { TypedEmitter as EventEmitter } from 'tiny-typed-emitter';
 import { ApiConnection } from '..';
 import Logger from '../logger';
@@ -22,19 +22,49 @@ export default class SubscriptionManager
         this.emitter = new EventEmitter();
     }
 
-    async init()
+    async initialize()
+    {                
+        this.api.sessionManager.on('logged-in', this.loggedIn.bind(this));
+        this.api.sessionManager.on('logged-out', this.loggedOut.bind(this));
+
+        if (this.api.sessionManager.userInfo !== undefined)
+        {
+            await this.loggedIn();
+        }
+    }
+
+    private async loggedIn()
     {
-        this.ws = await this.createWebsocket();
+        if (!this.ws)
+        {
+            this.ws = await this.createWebsocket();
+        }
+    }
+
+    private loggedOut()
+    {
+        if (!!this.ws)
+        {
+            this.ws.close(1000);
+        }
     }
 
     private async createWebsocket()
-    {
+    {        
         const headers = { ...await this.api.getHeaders() };
 
         return new Promise<Websocket>((resolve, reject) =>
         {
+            if ('document' in global)
+            {
+                console.log("Setting cookie in document");
+                global.document.cookie += `Authorization:${headers.Authorization}; `;
+            }
+
             let ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev", { headers });
 
+            this.ws = ws;
+            
             let _this = this;
 
             function retry(ws:Websocket)
@@ -49,10 +79,7 @@ export default class SubscriptionManager
             {   
                 ws?.off('error', retry);
 
-                logger.success('Websocket opened.');
-
-                (ws as any).pingInterval = setInterval(() => { console.log("ping"); ws?.ping(); }, 5 * 60 * 1000);
-                (ws as any).migrateTimeout = setTimeout(() => this.migrate(), 110 * 60 * 1000);
+                this.onOpen();
 
                 resolve(ws);
             });
@@ -81,22 +108,40 @@ export default class SubscriptionManager
                     }
                 }
             });
+        });
+    }
 
-            ws.on('close', (code, reason) =>
-            { 
-                clearInterval((ws as any).pingInterval);
-                clearTimeout((ws as any).migrate);
+    private onOpen()
+    {
+        logger.success('Websocket opened.');
 
-                if (code == 1000)
-                {
-                    logger.info(`WebAPI Websocket closed normally`);
-                    return;
-                }
+        const wsAny:any = this.ws;
 
-                logger.error(`WebAPI Websocket closed. Code: ${code}. Reason: ${reason}.`); 
+        wsAny.pingInterval = setInterval(() => { this.ws?.ping(); }, 5 * 60 * 1000);
+        wsAny.migrateTimeout = setTimeout(() => this.migrate(), 110 * 60 * 1000);
 
-                this.init();
-            });
+        this.ws!.on('close', (code, reason) =>
+        { 
+            clearInterval(wsAny.pingInterval);
+            clearTimeout(wsAny.migrate);
+
+            if (code == 1000)
+            {
+                logger.info(`WebAPI Websocket closed normally`);
+                return;
+            }
+
+            logger.error(`WebAPI Websocket closed. Code: ${code}. Reason: ${reason}.`); 
+
+            if (this.api.sessionManager.userInfo !== undefined)
+            {
+                logger.info("Reattempting connection");
+                this.loggedIn();
+            }
+            else
+            {
+                logger.info("No longer logged in. Cannot reattempt connection");
+            }
         });
     }
 
@@ -152,7 +197,7 @@ export default class SubscriptionManager
     {
         if (!this.ws)
         {
-            throw new Error("Subscription manager must have init called first");
+            throw new Error("Subscription manager must have initialize called first");
         }
 
         this.emitter.on(`${event}-${sub}`, callback);
@@ -164,7 +209,7 @@ export default class SubscriptionManager
     {
         if (!this.ws)
         {
-            throw new Error("Subscription manager must have init called first");
+            throw new Error("Subscription manager must have initialize called first");
         }
 
         this.emitter.off(`${event}-${sub}`, callback);
@@ -176,7 +221,7 @@ export default class SubscriptionManager
     {
         if (!this.ws)
         {
-            throw new Error("Subscription manager must have init called first");
+            throw new Error("Subscription manager must have initialize called first");
         }
         
         if (!!this.migrating && path != 'migrate')

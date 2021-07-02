@@ -5,14 +5,21 @@ const logger = new Logger('Client');
 
 export default class Client
 {
-    api:ApiConnection = new ApiConnection();
-    subscriptions:SubscriptionManager = new SubscriptionManager(this.api);
-    groupManager:GroupManager = new GroupManager(this.subscriptions);
+    api:ApiConnection;
+    subscriptions:SubscriptionManager;
+    groupManager:GroupManager;
 
-    async init(config:Config)
+    constructor(config:Config)
     {
-        await this.api.login(config);
+        this.api = new ApiConnection(config);
+        this.subscriptions = new SubscriptionManager(this.api);
+        this.groupManager = new GroupManager(this.subscriptions);
+    }
+
+    async initialize()
+    {
+        await this.api.initialize();
         
-        await this.subscriptions.init();
+        await this.subscriptions.initialize();
     }
 }

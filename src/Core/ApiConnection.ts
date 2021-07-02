@@ -1,25 +1,17 @@
-import { ClientCredentials, AccessToken, Token, ModuleOptions, ResourceOwnerPassword } from 'simple-oauth2';
-import decode from 'jwt-decode';
-import nodeFetch from 'node-fetch';
 import https from 'https';
 import http from 'http';
 
 import Config from './Config';
 import Logger from '../logger';
 
-import sha512 from "crypto-js/sha512";
-import { TypedEmitter } from 'tiny-typed-emitter';
+import SessionManager from './SessionManager';
+
+import { ClientCredentialsProvider, TokenProvider } from './auth/TokenProvider';
+
+import { fetch } from './utility';
 
 export type HttpMethod = 'POST' | 'DELETE' | 'GET' | 'PUT' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 
-try
-{
-    var fetchInternal = nodeFetch.bind(window);
-}
-catch (e)
-{
-    var fetchInternal = nodeFetch;
-}
 
 export class HttpError
 {
@@ -45,121 +37,58 @@ export interface UserInfo
 
 const logger = new Logger('ApiConnection');
 
-interface Events
+export default class ApiConnection
 {
-    'logged-in' : ()=>void,
-    'logged-out' : ()=>void,
-    'updated' : ()=>void
-}
+    config:Config;
+    tokenProvider:TokenProvider;
 
-export default class ApiConnection extends TypedEmitter<Events>
-{
-    config?:Config;
-    clientConfig?:ModuleOptions<"client_id">;
     httpsAgent?: http.Agent;
     headers: any;
-    accessToken?: AccessToken;
-    decodedToken?: any;
-    userId?: number;
-    endpoint?: string;
 
     canRefresh:boolean = false;
 
     refresh?:Promise<void>;
 
-    async initOffline(config: Config)
-    {
-        this.init(config);
+    sessionManager:SessionManager;
 
-        await this.setupHttpsClient();
-    }
-
-    private init(config: Config)
-    {
+    constructor(config:Config)
+    {        
         this.config = config;
+        this.tokenProvider = TokenProvider.create(config, this.handleToken.bind(this));
 
-        this.endpoint = config.endpoint || 'https://967phuchye.execute-api.ap-southeast-2.amazonaws.com/test/api/';
-        
-        this.clientConfig = {
-            client: {
-                id: config.client_id,
-                secret: config.client_secret,
-            },
-            auth: {
-                tokenHost: config.tokenHost || "https://accounts.townshiptale.com",
-                tokenPath: "/connect/token",
-                authorizePath: "/connect/authorize",
+        this.sessionManager = new SessionManager(this, this.setupHttpsClient, this.handleException);
+    }
+
+    async handleToken()
+    {
+        this.setupHttpsClient();
+
+        await this.sessionManager.refreshUser();
+    }
+
+    async initialize()
+    {
+        if (this.tokenProvider instanceof ClientCredentialsProvider)
+        {
+            logger.info("Logging in with client credentials");
+
+            try
+            {   
+                await this.tokenProvider.getToken();    
             }
-        };
-    }
-
-    async login(config: Config)
-    {
-        this.init(config);
-
-        if (this.clientConfig == undefined)
+            catch (e)
+            {
+                this.handleException(e);
+    
+                throw e;
+            }
+        }
+        else
         {
-            logger.error("Invalid client config");
-            return;
+            logger.info("Checking cookies for logged in user.");
+
+            // await this.sessionManager.checkLoggedInExternal();
         }
-
-        const tokenParams = {
-            scope: config.scope
-        };
-
-        const client = new ClientCredentials(this.clientConfig);
-        
-        try
-        {   
-            this.accessToken = await client.getToken(tokenParams);
-        }
-        catch (e)
-        {
-            this.handleException(e);
-
-            throw e;
-        }
-
-        await this.setupHttpsClient();
-    }
-
-    async loginResourceOwner(username:string, password:string, isHashed:boolean = false)
-    {
-        if (this.clientConfig == undefined)
-        {
-            logger.error("Requires initOffline first");
-            return;
-        }
-
-        if (!isHashed)
-        {
-            password = this.hashPassword(password);
-        }
-
-        this.canRefresh = true;
-
-        const tokenParams = {
-            username,
-            password,
-            scope: this.config!.scope
-        };
-        
-        const client = new ResourceOwnerPassword(this.clientConfig);
-        
-        try
-        {   
-            this.accessToken = await client.getToken(tokenParams);
-
-
-        }
-        catch (e)
-        {
-            this.handleException(e);
-
-            throw e;
-        }
-
-        await this.setupHttpsClient();
     }
 
     private handleException(e:any)
@@ -178,145 +107,35 @@ export default class ApiConnection extends TypedEmitter<Events>
         }
     }
 
-    hashPassword(password:string) : string
-    {
-        return sha512(password).toString();
-    }
-
-    async loadResourceOwner(config:Config, accessToken:object)
-    {
-        this.init(config);
-        
-        if (this.clientConfig == undefined)
-        {
-            logger.error("Invalid client config");
-            return;
-        }
-
-        this.canRefresh = true;
-
-        const client = new ResourceOwnerPassword(this.clientConfig);
-
-        this.accessToken = client.createToken(accessToken);
-
-        this.setupHttpsClient();
-    }
-
     async getHeaders()
     {
-        await this.checkRefresh();
+        await this.tokenProvider.checkRefresh();
 
         return this.headers;
     }
 
-    private async setupHttpsClient()
+    private setupHttpsClient()
     {
         logger.info("Setting up https client");
-
-        if (this.accessToken != undefined)
-        {
-            logger.info("Decoding token");
-
-            this.decodedToken = this.decodedToken || {};
-
-            var decoded = decode(this.accessToken.token.access_token);
-            
-            Object.assign(this.decodedToken, decoded);
-        }
 
         this.headers = {
             "Content-Type": "application/json",
             "x-api-key": "2l6aQGoNes8EHb94qMhqQ5m2iaiOM9666oDTPORf",
-            "User-Agent": !!this.config ? this.config!.client_id : 'Unknown',
-            "Authorization": !!this.accessToken ? ("Bearer " + this.accessToken.token.access_token) : undefined,
+            "User-Agent": !!this.config ? this.config.clientId : 'Unknown',
+            "Authorization": !!this.tokenProvider.token ? ("Bearer " + this.tokenProvider.token.accessToken) : undefined,
         };
 
         if (!this.httpsAgent)
         {
-            this.httpsAgent = this.endpoint!.startsWith('https') ? new https.Agent() : new http.Agent();
-        }
-        
-        if (!this.userId && !!this.decodedToken)
-        {
-            this.userId = this.decodedToken.client_sub || this.decodedToken.sub;
-
-            logger.success("User ID: " + this.userId);
-
-            if (!!this.decodedToken.client_username)
-            {
-                logger.success("Username: " + this.decodedToken.client_username);
-            }
-
-            this.emit('logged-in');
-        }
-        
-        this.emit('updated');
-    }
-
-    private async checkRefresh()
-    {
-        if (this.accessToken == undefined)
-        {
-            return;
-        }
-    
-        if (!this.refresh && this.accessToken.expired(15))
-        {
-            this.refresh = this.refreshInternal();
-        }
-        
-        await this.refresh;
-
-        this.refresh = undefined;
-    }
-
-    forceRefresh()
-    {
-        return this.refreshInternal();
-    }
-
-    private async refreshInternal()
-    {
-        if (this.config === undefined || this.accessToken === undefined)
-        {
-            return;
-        }
-        
-        logger.info("Refreshing session");
-
-        var refreshParams = {
-            scope: this.config.scope
-        }
-
-        try
-        {
-            if (this.canRefresh)
-            {
-                var result = await this.accessToken.refresh(refreshParams);
-
-                if (this.accessToken !== undefined)
-                {
-                    this.accessToken = result;
-                }
-            }
-            else
-            {
-                await this.login(this.config);
-            }
-
-            await this.setupHttpsClient();
-        }
-        catch (e)
-        {
-            logger.error(`Error refreshing token ${e.message}`);
+            this.httpsAgent = this.config.endpoint?.startsWith('https') ? new https.Agent() : new http.Agent();
         }
     }
 
     async fetch(method: HttpMethod, path: string, body: any | undefined = undefined)
     {
-        await this.checkRefresh();
-
-        return await fetchInternal(this.endpoint + path, {
+        await this.tokenProvider.checkRefresh();
+        
+        return await fetch(this.config.endpoint + path, {
             headers: this.headers,
             method,
             agent: this.httpsAgent,
@@ -351,25 +170,5 @@ export default class ApiConnection extends TypedEmitter<Events>
         }
 
         return value;
-    }
-
-    async logout()
-    {
-        if (this.accessToken !== undefined)
-        {
-            this.accessToken.revokeAll();
-
-            this.accessToken = undefined;
-            this.canRefresh = false;
-            this.decodedToken = undefined;
-            this.headers = undefined;
-            this.httpsAgent = undefined;
-            this.config = undefined;
-            this.clientConfig = undefined;
-            this.endpoint = undefined;
-
-            
-            this.emit('logged-out');
-        }
     }
 }
