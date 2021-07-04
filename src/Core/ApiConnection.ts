@@ -10,6 +10,7 @@ import { TokenProvider } from './auth/TokenProvider';
 
 import { fetch } from './utility';
 import { ClientCredentialsProvider } from './auth/ClientCredentialsProvider';
+import { AuthorizationCodeProvider } from './auth/AuthorizationCodeProvider';
 
 export type HttpMethod = 'POST' | 'DELETE' | 'GET' | 'PUT' | 'HEAD' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH';
 
@@ -38,6 +39,8 @@ export interface UserInfo
 
 const logger = new Logger('ApiConnection');
 
+
+
 export default class ApiConnection
 {
     config:Config;
@@ -55,7 +58,19 @@ export default class ApiConnection
     constructor(config:Config)
     {        
         this.config = config;
-        this.tokenProvider = TokenProvider.create(config, this.handleToken.bind(this));
+        
+        if ('clientSecret' in config)
+        {
+            this.tokenProvider = new ClientCredentialsProvider(config, this.handleToken.bind(this));
+        }
+        else if ('redirectUri' in config)
+        {
+            this.tokenProvider = new AuthorizationCodeProvider(config, this.handleToken.bind(this));
+        }
+        else
+        {
+            throw new Error("A client secret must be provided for bots, or a redirectUri for websites");
+        }
 
         this.sessionManager = new SessionManager(this, this.setupHttpsClient, this.handleException);
     }

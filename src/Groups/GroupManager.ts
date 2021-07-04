@@ -40,7 +40,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             getId: group => group.info.id, 
             process: data => !!data.group ? new Group(this, data.group, data.member) : new Group(this, data)
         },
-        () => this.api.sessionManager.userInfo!.userId);
+        () => this.api.sessionManager.userInfo!.id);
 
         this.groups.markExpandable();
             
@@ -60,7 +60,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             getId: invite => invite.info.id,
             process: data => new GroupInvite(this, data)
         },
-        () => this.api.sessionManager.userInfo!.userId);
+        () => this.api.sessionManager.userInfo!.id);
 
         this.requests = new LiveList(this.subscriptions, {
             name: "requests",
@@ -71,7 +71,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             getId: invite => invite.info.id,
             process: data => new GroupRequest(this, data)
         },
-        () => this.api.sessionManager.userInfo!.userId);    
+        () => this.api.sessionManager.userInfo!.id);    
     }   
 
     private async getGroup(id:number)
@@ -79,7 +79,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
         var [group, member] = await Promise.all(
         [
             this.api.fetch('GET', `groups/${id}`),
-            this.api.fetch('GET', `groups/${id}/members/${this.api.sessionManager.userInfo!.userId}`)       
+            this.api.fetch('GET', `groups/${id}/members/${this.api.sessionManager.userInfo!.id}`)       
         ]);
 
         return { group, member };

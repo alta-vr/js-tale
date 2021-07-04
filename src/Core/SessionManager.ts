@@ -5,6 +5,7 @@ import sha512 from "crypto-js/sha512";
 import Store from './Store';
 
 import { TypedEmitter } from 'tiny-typed-emitter';
+import { UserInfo } from "./ApiConnection";
 
 
 const logger = new Logger('SessionManager');
@@ -17,12 +18,6 @@ interface Events
     'logged-in' : ()=>void,
     'logged-out' : ()=>void,
     'updated' : ()=>void
-}
-
-interface UserInfo
-{
-    userId:number;
-    username:string;
 }
 
 export default class SessionManager extends TypedEmitter<Events>
@@ -59,11 +54,18 @@ export default class SessionManager extends TypedEmitter<Events>
 
                 if (!!decoded.sub)
                 {
-                    this.userInfo = await this.api.tokenProvider.getUser();
+                    try
+                    {
+                        this.userInfo = await this.api.tokenProvider.getUser();
+                    }
+                    catch (e)
+                    {
+                        this.userInfo = { id: sub, username: decoded.username };
+                    }
                 }
                 else
                 {
-                    this.userInfo = { userId: sub, username: decoded.client_username };
+                    this.userInfo = { id: sub, username: decoded.client_username };
                 }
                 
                 if (!wasLoggedIn)

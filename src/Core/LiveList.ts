@@ -92,7 +92,7 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
 
     private currentUser()
     {
-        return this.api.sessionManager.userInfo?.userId;
+        return this.api.sessionManager.userInfo?.id;
     }
 
     private ensureSameUser(userId:number|undefined)

@@ -66,7 +66,7 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
         return this.base64URLEncode(crypto.randomBytes(32));
     };
 
-    private async createChallenge(verifier:string)
+    private createChallenge(verifier:string)
     {
         return this.base64URLEncode(crypto.createHash('sha256').update(verifier).digest());
     }
@@ -85,8 +85,10 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
         `scope=${scope}&` +
         'response_type=code&' +
         `code_challenge=${challenge}&` +
-        `code_challenge_method=S256` + 
+        `code_challenge_method=S256&` + 
         `redirect_uri=${redirectUri}`;
+
+        console.log(url);
 
         return url;
     }
@@ -173,7 +175,7 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
 
         var headers = {
             'Content-Type' : 'application/x-www-form-urlencoded'
-        }
+        };
 
         var parameters = {
             grant_type: 'authorization_code',
@@ -181,7 +183,32 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
             redirect_uri: this.config.redirectUri,
             client_id: this.config.clientId,
             code_verifier: verifier,
-        }
+        };
+        
+        var response = await fetch(`${TokenHost}${TokenPath}`, {
+            method: 'POST',
+            headers,
+            body : querystring.stringify(parameters)
+        });
+
+        var value = await response.json();
+        
+        await this.setToken(value);
+        
+        this.store?.set('token', JSON.stringify(value));
+    }
+
+    async refresh()
+    {
+        var headers = {
+            'Content-Type' : 'application/x-www-form-urlencoded'
+        };
+
+        var parameters = {
+            client_id: this.config.clientId,
+            grant_type: 'refresh_token',
+            refresh_token: this.token?.refreshToken,
+        };
         
         var response = await fetch(`${TokenHost}${TokenPath}`, {
             method: 'POST',
@@ -194,10 +221,5 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
         this.store?.set('token', JSON.stringify(value));
 
         await this.setToken(value);
-    }
-
-    async refresh()
-    {
-        logger.error("Refresh not yet implemented");
     }
 }

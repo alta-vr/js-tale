@@ -26,7 +26,7 @@ export default class Profile
 
     getId()
     {
-        return this.api.sessionManager.userInfo?.userId;
+        return this.api.sessionManager.userInfo?.id;
     }
 
     getUsername()

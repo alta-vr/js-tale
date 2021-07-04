@@ -4,8 +4,6 @@ import Config from "../Config";
 import { fetch } from "../utility";
 
 import querystring from 'querystring';
-import { ClientCredentialsProvider } from "./ClientCredentialsProvider";
-import { AuthorizationCodeProvider } from "./AuthorizationCodeProvider";
 import Logger from "../../logger";
 
 const logger = new Logger('TokenProvider');
@@ -52,6 +50,7 @@ interface TokenResult
     access_token: string;
     refresh_token?: string;
     expires_in: number;
+    expires_at?: number;
     token_type: string;
     scope: string;
 }
@@ -69,7 +68,7 @@ class Token
     {
         this.accessToken = data.access_token;
         this.refreshToken = data.refresh_token;
-        this.expiry = Date.now() + data.expires_in * 1000;
+        this.expiry = data.expires_at!;
         this.scope = data.scope;
 
         this.decoded = jwtDecode(this.accessToken);
@@ -117,24 +116,15 @@ export abstract class TokenProvider
         this.handleToken = handleToken;
     }
 
-    static create(config:Config, handleToken:()=>Promise<void>) : TokenProvider
-    {
-        if ('clientSecret' in config)
-        {
-            return new ClientCredentialsProvider(config, handleToken);
-        }
-        else if ('redirectUri' in config)
-        {
-            return new AuthorizationCodeProvider(config, handleToken);
-        }
-
-        throw new Error("A client secret must be provided for bots, or a redirectUri for websites");
-    }
-
     protected abstract getConfig() : BaseConfig;
 
     protected async setToken(tokenResult:TokenResult)
     {
+        if (!tokenResult.expires_at)
+        {
+            tokenResult.expires_at = Date.now() + tokenResult.expires_in * 1000;
+        }
+
         this.token = new Token(tokenResult);
 
         await this.handleToken();
@@ -144,12 +134,12 @@ export abstract class TokenProvider
     {
         try
         {
-            var path = `${this.getConfig().tokenHost}${UserInfoPath}`;
+            const path = `${this.getConfig().tokenHost}${UserInfoPath}`;
 
-            return await fetch(path, 
+            const result = await fetch(path, 
             { 
                 headers : {
-                    'Authorization': `Bearer: ${this.token}`
+                    'Authorization': `Bearer ${this.token!.accessToken}`
                 },
                 method: 'GET'
             })
@@ -162,11 +152,18 @@ export abstract class TokenProvider
 
                 throw new HttpError('GET', path, res.status,  res.statusText);
             });
+
+            console.log("USER RESULT:");
+            console.log(result);
+
+            return result;
         }
         catch (e)
         {
             console.error("Error refreshing userinfo");
             console.error(e);
+            
+            throw e;
         }
     }
 
@@ -189,6 +186,10 @@ export abstract class TokenProvider
             return;
         }
     
+        console.log("CHECK REFRESH");
+        console.log(Date.now());
+        console.log(this.token.expiry);
+
         if (!this.currentRefresh && this.token.expiry - (Date.now() + ExpirationBufferMs) <= 0)
         {
             this.currentRefresh = this.refresh()

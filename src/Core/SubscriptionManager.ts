@@ -9,12 +9,13 @@ export default class SubscriptionManager
 {
     emitter: EventEmitter;
     api: ApiConnection;
-    ws: Websocket | undefined = undefined;
+    ws: Websocket | undefined | null = undefined;
     nextId: number = 0;
 
     retryTimeout?:NodeJS.Timeout;
 
     private migrating?:Promise<void>;
+    private create?:Promise<Websocket|null>;
 
     constructor(api: ApiConnection)
     {
@@ -33,58 +34,77 @@ export default class SubscriptionManager
         }
     }
 
-    private async loggedIn()
+    private loggedIn()
     {
-        if (!this.ws)
-        {
-            this.ws = await this.createWebsocket();
-        }
+        this.checkWebsocket();
     }
 
     private loggedOut()
     {
-        if (!!this.ws)
-        {
-            this.ws.close(1000);
-        }
+        this.close();
     }
 
-    private async createWebsocket()
+    private async checkWebsocket()
+    {
+        if (this.ws !== undefined)
+        {
+            return;
+        }
+
+        if (!this.create)
+        {
+            this.create = this.createWebsocketInternal();
+        }
+
+        this.ws = await this.create;
+    }
+
+    private async createWebsocketInternal()
     {        
         const headers = { ...await this.api.getHeaders() };
 
-        return new Promise<Websocket>((resolve, reject) =>
+        return new Promise<Websocket|null>((resolve, reject) =>
         {
             if ('document' in global)
             {
-                console.log("Setting cookie in document");
+                logger.info("Setting cookie in document");
                 global.document.cookie += `Authorization:${headers.Authorization}; `;
             }
+            
+            if ('window' in global)
+            {
+                //var ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev");
 
-            let ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev", { headers });
-
-            this.ws = ws;
+                logger.warn("Skipping websocket create");
+                this.ws = null;
+                resolve(null);
+                return;
+            }
+            else
+            {
+                var ws = new Websocket("wss://5wx2mgoj95.execute-api.ap-southeast-2.amazonaws.com/dev", { headers });
+            }
             
             let _this = this;
 
-            function retry(ws:Websocket)
+            function retry(error:Websocket.ErrorEvent)
             {
                 logger.error("Error connecting API websocket. Retrying in 10s");
-                _this.retryTimeout = setTimeout(() => _this.createWebsocket().then(resolve), 10000);
+                _this.retryTimeout = setTimeout(() => _this.createWebsocketInternal().then(resolve), 10000);
             }
 
-            ws.on('error', retry);
+            ws.onerror = retry;
 
-            ws.on('open', () =>
+            ws.onopen = () =>
             {   
                 ws?.off('error', retry);
 
-                this.onOpen();
+                this.onOpen(ws);
 
                 resolve(ws);
-            });
+            };
             
-            ws.on('message', (message: any) =>
+            ws.onmessage = (message: any) =>
             {
                 if (!!message)
                 {
@@ -107,31 +127,31 @@ export default class SubscriptionManager
                         logger.error(parsed);
                     }
                 }
-            });
+            };
         });
     }
 
-    private onOpen()
+    private onOpen(ws:Websocket)
     {
         logger.success('Websocket opened.');
 
-        const wsAny:any = this.ws;
+        const wsAny:any = ws;
 
-        wsAny.pingInterval = setInterval(() => { this.ws?.ping(); }, 5 * 60 * 1000);
+        wsAny.pingInterval = setInterval(() => { ws?.ping(); }, 5 * 60 * 1000);
         wsAny.migrateTimeout = setTimeout(() => this.migrate(), 110 * 60 * 1000);
 
-        this.ws!.on('close', (code, reason) =>
+        this.ws!.onclose = (closeEvent:Websocket.CloseEvent) =>
         { 
             clearInterval(wsAny.pingInterval);
             clearTimeout(wsAny.migrate);
 
-            if (code == 1000)
+            if (closeEvent.code == 1000)
             {
                 logger.info(`WebAPI Websocket closed normally`);
                 return;
             }
 
-            logger.error(`WebAPI Websocket closed. Code: ${code}. Reason: ${reason}.`); 
+            logger.error(`WebAPI Websocket closed. Code: ${closeEvent.code}. Reason: ${closeEvent.reason}.`); 
 
             if (this.api.sessionManager.userInfo !== undefined)
             {
@@ -142,7 +162,7 @@ export default class SubscriptionManager
             {
                 logger.info("No longer logged in. Cannot reattempt connection");
             }
-        });
+        };
     }
 
 
@@ -164,7 +184,9 @@ export default class SubscriptionManager
 
             logger.info("Migrating websocket: Creating a new websocket");
             
-            this.ws = await this.createWebsocket();
+            this.ws = undefined;
+
+            await this.checkWebsocket();
 
             logger.info("Migrating websocket: Pausing outgoing and sending migration token");
 
@@ -188,28 +210,32 @@ export default class SubscriptionManager
         }
         catch (e)
         {
-            console.error("Error migrating");
-            console.error(e);
+            logger.error("Error migrating");
+            logger.error(e);
         }
     }
 
-    subscribe(event: string, sub: any, callback: (data: any) => void)
-    {
-        if (!this.ws)
+    async subscribe(event: string, sub: any, callback: (data: any) => void)
+    {    
+        await this.checkWebsocket();
+
+        if (this.ws === null)
         {
-            throw new Error("Subscription manager must have initialize called first");
+            return Promise.resolve();
         }
 
         this.emitter.on(`${event}-${sub}`, callback);
         
-        return this.send('POST', `subscription/${event}/${sub}`);
+        return await this.send('POST', `subscription/${event}/${sub}`);
     }
 
     async unsubscribe(event:string, sub:any, callback: (data:any) => void)
     {
-        if (!this.ws)
+        await this.checkWebsocket();
+
+        if (this.ws === null)
         {
-            throw new Error("Subscription manager must have initialize called first");
+            return Promise.resolve();
         }
 
         this.emitter.off(`${event}-${sub}`, callback);
@@ -219,9 +245,11 @@ export default class SubscriptionManager
 
     async send(method:string, path:string, content?:any) : Promise<any>
     {
-        if (!this.ws)
+        await this.checkWebsocket();
+
+        if (this.ws === null)
         {
-            throw new Error("Subscription manager must have initialize called first");
+            return Promise.resolve();
         }
         
         if (!!this.migrating && path != 'migrate')

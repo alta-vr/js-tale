@@ -22,4 +22,9 @@ export default class Client
         
         await this.subscriptions.initialize();
     }
+
+    async logout()
+    {
+        await this.api.sessionManager.logout();
+    }
 }
