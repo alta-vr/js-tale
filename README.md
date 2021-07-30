@@ -1,10 +1,11 @@
 # Work In Progress
-Please note this library is a work in progress, and is not usable by the public yet. It requires OAuth client keys, which are yet to be available. Please look into att-bot-js or att-websockets if you would like to make a bot in the meantime.
+Please note this library is a work in progress, although usable, it is prone to changes.
+Any thoughts and feedback is always appreciated.
 
 # About
 js-tale is a node.js library that eases interaction with A Township Tale's APIs. 
 
-Unlike the old alta-jsapi, it makes extensive use of object-oriented design, making finding functions, and calling the API much more intuitive.
+It makes extensive use of object-oriented design, with the goal of making getting started as easy and intuitive as possible.
 
 ## Setup
 
@@ -87,6 +88,16 @@ class Main
 var main = new Main();
 main.initialize();
 ```
+
+## Connecting to a server
+To invite the bot to your server, invite it by it's username or userid (not client id).
+With the example above, the bot will automatically accept any invites sent to it (`acceptAllInvites(true)`), both at startup, and while running.
+
+You will also need to modify the permissions for the bot (eg. by selecting in the member list and clicking 'promote to admin') if you wish for it to be able to connect to the server or do other priveleged actions.
+
+The example above also has an `automaticConsole` call, which is used to simplify running a bot, by creating a connection and calling a callback whenever a server comes online.
+
+When your server is booted up (due to someone joining it, or the immediately upon the bot launching, if it's already online), you should receive that callback.
 
 ## Modules
 Currently att.js has the following modules:
