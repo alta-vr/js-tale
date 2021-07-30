@@ -15,22 +15,22 @@ Firstly, setup a project and install required dependencies.
 
 `npm i js-tale`
 
-`npm i typescript --save-dev`
-
-`npm i ts-node --save-dev`
+`npm i -g typescript ts-node`
 
 `tsc --init`
 
 In `package.json`, add a script called `start`:
 `"start": "ts-node ."`
 
+In `tsconfig.json`, set 'target' to `es6` and add 'resolveJsonModule' as `true`.
+
 ### Config
 You will need to configure client id and secret somewhere that won't be checked into git.
-For instance, create a file called `config.js`, and add `config.js` to the `.gitignore`.
+For instance, create a file called `config.json`, and add `config.json` to the `.gitignore`.
 
 This file should contain:
 ```
-module.exports = {
+{
     "client_id": "<insert id here>",
     "client_secret": "<insert secret here>",
     "scope" : "<insert scopes here>",
@@ -47,10 +47,10 @@ This is the main entry point of your bot.
 Here's an example of a bot which will automatically connect to available servers.
 
 ```
-const config = require('./config');
-
-import { Client, Connection } from 'js-tale/dist';
+import { Client, ServerConnection } from 'js-tale/dist';
 import Logger, { initLogger } from 'js-tale/dist/logger';
+
+import config from './config.json';
 
 initLogger();
 
@@ -58,11 +58,11 @@ const logger = new Logger('Main');
 
 class Main
 {
-    client:Client = new Client();
+    client:Client = new Client(config);
 
-    async init()
+    async initialize()
     {
-        await this.client.init(config);
+        await this.client.initialize();
         
         await this.client.groupManager.groups.refresh(true);
 
@@ -71,21 +71,21 @@ class Main
         this.client.groupManager.automaticConsole(this.connectionOpened.bind(this));
     }
 
-    private connectionOpened(connection:Console)
+    private connectionOpened(connection:ServerConnection)
     {
-        logger.success(`Connected to ${connection.server.data.name}`);
+        logger.success(`Connected to ${connection.server.info.name}`);
 
         connection.on('closed', this.connectionClosed)
     }
 
-    private connectionClosed(connection:Console)
+    private connectionClosed(connection:ServerConnection)
     {
-        logger.warn(`Disconnected from ${connection.server.data.name}`);
+        logger.warn(`Disconnected from ${connection.server.info.name}`);
     }
 }
 
 var main = new Main();
-main.init();
+main.initialize();
 ```
 
 ## Modules
@@ -114,6 +114,6 @@ Also provides a list of group servers, with high level functionality to automati
 Maintains information about a server and its status.
 Allows for the creation of websocket connections to the server when running.
 
-### Console (`Groups/Console.ts`)
+### Console (`Groups/ServerConnection.ts`)
 Maintains a websocket connection to a running server.
 Allows for subscriptions to be made, and commands to be sent.
