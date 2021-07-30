@@ -106,6 +106,8 @@ export default class SubscriptionManager
             
             ws.onmessage = (message: any) =>
             {
+                message = message.data;
+
                 if (!!message)
                 {
                     try
@@ -140,7 +142,7 @@ export default class SubscriptionManager
         wsAny.pingInterval = setInterval(() => { ws?.ping(); }, 5 * 60 * 1000);
         wsAny.migrateTimeout = setTimeout(() => this.migrate(), 110 * 60 * 1000);
 
-        this.ws!.onclose = (closeEvent:Websocket.CloseEvent) =>
+        ws!.onclose = (closeEvent:Websocket.CloseEvent) =>
         { 
             clearInterval(wsAny.pingInterval);
             clearTimeout(wsAny.migrate);

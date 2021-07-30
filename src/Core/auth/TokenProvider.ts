@@ -186,10 +186,6 @@ export abstract class TokenProvider
             return;
         }
     
-        console.log("CHECK REFRESH");
-        console.log(Date.now());
-        console.log(this.token.expiry);
-
         if (!this.currentRefresh && this.token.expiry - (Date.now() + ExpirationBufferMs) <= 0)
         {
             this.currentRefresh = this.refresh()

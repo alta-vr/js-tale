@@ -4,6 +4,7 @@ import { AuthorizePath, BaseConfig, TokenHost, TokenPath, TypedTokenProvider } f
 
 import crypto from 'crypto';
 import querystring from 'querystring';
+import { fetch } from "../utility";
 
 const logger = new Logger('TokenProvider');
 
@@ -194,12 +195,17 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
         var value = await response.json();
         
         await this.setToken(value);
-        
+
         this.store?.set('token', JSON.stringify(value));
     }
 
     async refresh()
     {
+        if (!this.token?.refreshToken)
+        {
+            return;
+        }
+
         var headers = {
             'Content-Type' : 'application/x-www-form-urlencoded'
         };
@@ -216,10 +222,19 @@ export class AuthorizationCodeProvider extends TypedTokenProvider<AuthorizationC
             body : querystring.stringify(parameters)
         });
 
+        if (!response.ok)
+        {
+            console.error(response.status + " " + response.statusText);
+        }
+        else
+        {
+            console.log("Response is OK");
+        }
+
         var value = await response.json();
-        
-        this.store?.set('token', JSON.stringify(value));
 
         await this.setToken(value);
+        
+        this.store?.set('token', JSON.stringify(value));
     }
 }

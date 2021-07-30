@@ -103,7 +103,7 @@ export default class ApiConnection
         {
             logger.info("Checking cookies for logged in user.");
 
-            // await this.sessionManager.checkLoggedInExternal();
+            await (this.tokenProvider as AuthorizationCodeProvider).checkLoggedInExternal();
         }
     }
 
@@ -167,6 +167,11 @@ export default class ApiConnection
         })
         .then(res =>
         {
+            if (res.status === 204)
+            {
+                return null;
+            }
+
             return res.json();
         });
     }

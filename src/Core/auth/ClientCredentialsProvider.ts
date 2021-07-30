@@ -1,6 +1,7 @@
 import { TypedTokenProvider, BaseConfig, TokenHost, TokenPath } from "./TokenProvider";
 
 import querystring from 'querystring';
+import { fetch } from "../utility";
 
 export interface ClientCredentials extends BaseConfig
 {
