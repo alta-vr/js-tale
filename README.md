@@ -32,8 +32,8 @@ For instance, create a file called `config.json`, and add `config.json` to the `
 This file should contain:
 ```
 {
-    "client_id": "<insert id here>",
-    "client_secret": "<insert secret here>",
+    "clientId": "<insert id here>",
+    "clientSecret": "<insert secret here>",
     "scope" : "<insert scopes here>",
 }
 ```
