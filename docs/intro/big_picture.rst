@@ -33,7 +33,7 @@ Otherwise, these servers predominantly act "behind the scenes", as js-tale will 
 Alta Web API
 ------------
 
-Altas Web API is a contact point for a wide range of functionality. It has end points related to friends, groups, servers, and more. Access to these endpoints is limited by the scopes available to a client application.
+Altas Web API is a contact point for a wide range of functionality. It has endpoints related to friends, groups, servers, and more. Access to these endpoints is limited by the scopes available to a client application.
 
 The API also has support for websocket connections, allowing you to subscribe to various events, such as incoming friend requests, servers changing status, or members joining a group.
 
