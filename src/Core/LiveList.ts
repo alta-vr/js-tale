@@ -23,7 +23,12 @@ export interface LiveListDefinition<T>
     subscribeToDelete?: string;
     getRawId: (data: any) => number;
     getId: (item: T) => number;
-    process: (data: any) => T;
+    process: (existing:T|undefined, data: any) => T;
+}
+
+interface LiveListItem
+{
+    updated():void;
 }
 
 export default class LiveList<T> extends EventEmitter<LiveListEvents<T>> 
@@ -45,7 +50,7 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
     private subscribeToUpdate: undefined|((callback: (data: any) => void) => Promise<any>);
     private getRawId: (data: any) => number;
     private getId: (a: T) => number;
-    private process: (data: any) => T;
+    private process: (existing:T|undefined, data: any) => T;
 
     private currentRefresh: Promise<T[]>|undefined;
 
@@ -135,7 +140,7 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
             if (this.isExpandable)
             {
                 //Don't add to the list, as it may not belong there
-                return this.process(item);
+                return this.process(undefined, item);
             }
 
             this.receiveCreate({content:item});
@@ -275,7 +280,7 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
 
         if (!this.items.some(item => this.getId(item) == id))
         {
-            var item = this.process(event.content);
+            var item = this.process(undefined, event.content);
             this.items.push(item);
             this.map[id] = item;
             this.emit('create', item);
@@ -297,16 +302,24 @@ export default class LiveList<T> extends EventEmitter<LiveListEvents<T>>
 
     receiveUpdate(event: any)
     {
-        var id = this.getRawId(event.content);
-        var index = this.items.findIndex(item => this.getId(item) == id);
+        const id = this.getRawId(event.content);
+        const index = this.items.findIndex(item => this.getId(item) == id);
     
         if (index >= 0)
         {
-            var cache = { ...this.items[index] };
+            const cache = { ...this.items[index] };
 
-            Object.assign(this.items[index], this.process(event.content));
+            Object.assign(this.items[index], this.process(this.items[index], event.content));
 
             this.emit('update', this.items[index], cache);
+            
+            //Try to call updated
+            const item = <LiveListItem><any>this.items[index];
+
+            if (!!item.updated)
+            {
+                item.updated();
+            }
         }
     }
 

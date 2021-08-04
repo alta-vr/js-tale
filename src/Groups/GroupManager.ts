@@ -7,6 +7,7 @@ import Group from "./Group";
 import LiveList from "../Core/LiveList";
 import Logger from '../logger';
 import ServerConnection from './ServerConnection';
+import { GroupMember } from '..';
 
 
 interface GroupManagerEvents
@@ -36,9 +37,29 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             getSingle: this.getGroup.bind(this),
             subscribeToCreate: 'me-group-create',
             subscribeToDelete: 'me-group-delete',
-            getRawId : data => !!data.group ? data.group.id : data.id, 
+            subscribeToUpdate: 'me-group-update',
+            getRawId : data => !!data.group ? data.group.id : (data.id || data.group_id), 
             getId: group => group.info.id, 
-            process: data => !!data.group ? new Group(this, data.group, data.member) : new Group(this, data)
+            process: (existing, data) => {
+                //This isn't great... the data format of results can be a group, group member, or object with both group and member
+
+                if (!!data.group)
+                {
+                    return new Group(this, data.group, data.member);
+                }
+                else
+                {
+                    if (!!data.username)
+                    {
+                        //Role updated
+                        return <Group>{ member: new GroupMember(existing!, data) };
+                    }
+                    else
+                    {
+                        return new Group(this, data)
+                    }
+                }
+            }
         },
         () => this.api.sessionManager.userInfo!.id);
 
@@ -58,7 +79,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             subscribeToDelete: 'me-group-invite-delete',
             getRawId: data => data.id,
             getId: invite => invite.info.id,
-            process: data => new GroupInvite(this, data)
+            process: (existing, data) => new GroupInvite(this, data)
         },
         () => this.api.sessionManager.userInfo!.id);
 
@@ -69,7 +90,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
             subscribeToDelete: 'me-group-request-delete',
             getRawId: data => data.id, 
             getId: invite => invite.info.id,
-            process: data => new GroupRequest(this, data)
+            process: (existing, data) => new GroupRequest(this, data)
         },
         () => this.api.sessionManager.userInfo!.id);    
     }   
@@ -128,5 +149,7 @@ export default class GroupManager extends EventEmitter<GroupManagerEvents>
         {
             await handleGroup(group);
         }
+
+        await this.groups.refresh(true);
     }
 }

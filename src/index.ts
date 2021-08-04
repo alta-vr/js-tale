@@ -14,3 +14,4 @@ export { default as GroupMemberInvite } from './Groups/GroupMemberInvite';
 export { default as GroupMemberRequest } from './Groups/GroupMemberRequest';
 export { default as GroupRequest } from './Groups/GroupRequest';
 export { default as ServerConnection } from './Groups/ServerConnection';
+export { default as Permission } from './Groups/Permission';

@@ -25,8 +25,6 @@ Create a file called ``index.ts``. Add the following code to it::
         async initialize()
         {
             await this.client.initialize();
-            
-            await this.client.groupManager.groups.refresh(true);
 
             await this.client.groupManager.acceptAllInvites(true);
 

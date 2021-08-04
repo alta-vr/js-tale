@@ -63,3 +63,10 @@ These are:
    reference/LiveList
    reference/GroupManager
    reference/Group
+   
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Reference
+
+   server_connection_guide/overview

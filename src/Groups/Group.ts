@@ -10,6 +10,7 @@ import Server, { ServerInfo } from './Server';
 import ServerConnection from "./ServerConnection";
 import Logger from '../logger';
 import { ApiConnection, SubscriptionManager } from '..';
+import Permission from './Permission';
 
 
 interface GroupEvents
@@ -81,7 +82,7 @@ export class GroupServerList extends LiveList<Server>
             subscribeToDelete: 'group-server-delete',
             getRawId: data => data.id,
             getId: server => server.info.id,
-            process: data => new Server(group, data)
+            process: (existing, data) => new Server(group, data)
         }, 
         () => group.info.id);
         
@@ -178,7 +179,6 @@ export default class Group extends EventEmitter<GroupEvents>
         this.bans = this.createList('bans', 'ban', false, false, data => new GroupMemberBan(this, data));
         
         this.servers = new GroupServerList(this.manager.subscriptions, this);
-        this.servers.refresh(true);
 
         this.servers.on('create', data => this.emit('server-create', data));
         this.servers.on('delete', data => this.emit('server-delete', data));
@@ -214,6 +214,25 @@ export default class Group extends EventEmitter<GroupEvents>
         
         return list;
     }
+
+    hasPermission(permission:Permission|string)
+    {
+        if (!this.member)
+        {
+            return false;
+        }
+
+        var roleId = this.member.role;
+
+        var role = this.info.roles.find(item => item.role_id == roleId);
+        
+        if (!role)
+        {
+            return false;
+        }
+
+        return role.permissions.includes(permission.toString());
+    }
     
     dispose()
     {
@@ -238,7 +257,10 @@ export default class Group extends EventEmitter<GroupEvents>
     private receiveNewInfo(event: any)
     {
         this.manager.groups.receiveUpdate(event);
+    }
 
+    updated()
+    {
         this.emit('update', this);
     }
 
@@ -261,29 +283,48 @@ export default class Group extends EventEmitter<GroupEvents>
 
         let handleStatus = async (server:Server) =>
         {
-            if (server.isOnline)
+            if (this.hasPermission(Permission.Console))
             {
-                try
+                if (server.isOnline)
                 {
-                    var result = await server.getConsole();
-
-                    if (!connections.includes(result))
+                    try
                     {
-                        connections.push(result);
+                        var result = await server.getConsole();
 
-                        result.on('closed', (connection, info) => connections.splice(connections.indexOf(connection), 1));
+                        if (!connections.includes(result))
+                        {
+                            connections.push(result);
 
-                        callback(result);
+                            result.on('closed', (connection, info) => connections.splice(connections.indexOf(connection), 1));
+
+                            callback(result);
+                        }
+                    }
+                    catch (e)
+                    {
+                        console.log("catch");
+                        console.error(e);
+                        //Permission denied (if not, see console)
                     }
                 }
-                catch (e)
-                {
-                    console.log("catch");
-                    console.error(e);
-                    //Permission denied (if not, see console)
-                }
+            }
+            else
+            {
+                server.console?.disconnect();
             }
         }
+
+        let checkAll = (group:Group) =>
+        {
+            console.log("Role changed");
+
+            for (var server of this.servers.items)
+            {
+                handleStatus(server);
+            }
+        };
+
+        this.on('update', checkAll);
 
         this.servers.on('create', server =>
         {

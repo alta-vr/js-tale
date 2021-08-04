@@ -77,6 +77,11 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
 
     waitReady()
     {
+        if (this.isAllowed)
+        {
+            return;
+        }
+
         if (this.initializing === undefined)
         {
             logger.info("Doing initialize");
@@ -209,5 +214,6 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
     disconnect()
     {
         this.connection.terminate();
+        this.isAllowed = undefined;
     }
 }
