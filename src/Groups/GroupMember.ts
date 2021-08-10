@@ -1,4 +1,7 @@
 import Group from "./Group";
+import Logger from '../logger';
+
+const logger = new Logger('GroupMember');
 
 export default class GroupMember
 {
@@ -21,5 +24,11 @@ export default class GroupMember
         this.created = data.created_at;
         this.type = data.type;
         this.bot = data.bot;
+    }
+
+    ban()
+    {
+        return this.group.manager.api.fetch('POST', `groups/${this.group.info.id}/bans/${this.userId}`)
+        .then(logger.thenInfo(`Banned ${this.userId}`));
     }
 }
