@@ -1,15 +1,15 @@
 enum Permission
 {
-    Invite,
-    AcceptInvite,
-    Ban,
-    Kick,
-    CreateServer,
-    ModifyGroup,
-    ModifyServer,
-    Console,
-    ControlServer,
-    ManageRoles 
+    Invite = 'Invite',
+    AcceptInvite = 'AcceptInvite',
+    Ban = 'Ban',
+    Kick = 'Kick',
+    CreateServer = 'CreateServer',
+    ModifyGroup = 'ModifyGroup',
+    ModifyServer = 'ModifyServer',
+    Console = 'Console',
+    ControlServer = 'ControlServer',
+    ManageRoles = 'ManageRoles' 
 }
 
 export default Permission;

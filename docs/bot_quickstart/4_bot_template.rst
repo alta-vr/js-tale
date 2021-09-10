@@ -35,7 +35,7 @@ Create a file called ``index.ts``. Add the following code to it::
         {
             logger.success(`Connected to ${connection.server.info.name}`);
 
-            connection.on('closed', this.connectionClosed);
+            connection.on('closed', this.connectionClosed.bind(this));
         }
 
         private connectionClosed(connection:ServerConnection)
