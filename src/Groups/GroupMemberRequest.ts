@@ -21,6 +21,6 @@ export default class GroupMemberRequest extends GroupMember
     reject()
     {
         return this.group.manager.api.fetch('DELETE', `groups/${this.group.info.id}/requests/${this.userId}`)
-        .then(logger.thenInfo(`Rejected ${this.username} (${this.userId})'s reqyest to join ${this.group.info.name} (${this.group.info.id})`));
+        .then(logger.thenInfo(`Rejected ${this.username} (${this.userId})'s request to join ${this.group.info.name} (${this.group.info.id})`));
     }
 }
