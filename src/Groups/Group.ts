@@ -249,6 +249,18 @@ export default class Group extends EventEmitter<GroupEvents>
         return this.manager.api.fetch('POST', `groups/${this.info.id}/invites/${userId}`);
     }
 
+    ban(userId:number)
+    {
+        return this.manager.api.fetch('POST', `groups/${this.info.id}/bans/${userId}`)
+        .then(logger.thenInfo(`Banned ${userId}`));
+    }
+
+    unban(userId:number)
+    {
+        return this.manager.api.fetch('DELETE', `groups/${this.info.id}/bans/${userId}`)
+        .then(logger.thenInfo(`Revoked ban on ${userId}`));
+    }
+
     editInfo(edit:any)
     {
         return this.manager.api.fetch('PATCH', `groups/${this.info.id}`, edit);
