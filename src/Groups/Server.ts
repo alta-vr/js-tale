@@ -19,7 +19,7 @@ export interface ServerInfo
     server_status: string;
     scene_index: number;
     region: string;
-    online_ping: string|undefined;
+    last_online: string|undefined;
     description: string;
     playability: number;
     version: string;
@@ -50,7 +50,7 @@ export default class Server extends EventEmitter<ServerEvents>
     
     private evaluateState()
     {        
-        this.isOnline = !!this.info.online_ping && Date.now() - Date.parse(this.info.online_ping) < 10 * 60 * 1000;
+        this.isOnline = !!this.info.last_online && Date.now() - Date.parse(this.info.last_online) < 12 * 1000;
     }
 
     //Provided by LiveList update
