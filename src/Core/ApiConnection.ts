@@ -306,7 +306,7 @@ export default class ApiConnection extends TypedEmitter<Events>
 
             await this.setupHttpsClient();
         }
-        catch (e)
+        catch (e:any)
         {
             logger.error(`Error refreshing token ${e.message}`);
         }
