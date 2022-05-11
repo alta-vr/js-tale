@@ -89,7 +89,7 @@ export default class ServerConnection extends TypedEmitter<ConsoleEvents>
                 {
                     await this.connection.open();
                 }
-                catch (e)
+                catch (e:any)
                 {            
                     console.error("Couldn't connect. Is it offline?");
                     console.error(e);
