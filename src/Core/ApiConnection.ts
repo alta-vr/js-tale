@@ -78,7 +78,7 @@ export default class ApiConnection extends TypedEmitter<Events>
     {
         this.config = config;
 
-        this.endpoint = config.endpoint || 'https://967phuchye.execute-api.ap-southeast-2.amazonaws.com/test/api/';
+        this.endpoint = config.endpoint || 'https://967phuchye.execute-api.ap-southeast-2.amazonaws.com/prod/api/';
         
         this.clientConfig = {
             client: {
